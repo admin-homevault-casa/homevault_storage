@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HomeVault Viewer</title>
+  <style>
+    /* ── Design tokens ── */
+    :root {
+      --bg:         #0f0f0f;
+      --surface:    #1a1a1a;
+      --surface2:   #222222;
+      --border:     #2a2a2a;
+      --text:       #e8e6e0;
+      --muted:      #888880;
+      --accent:     #c8a96e;
+      --green:      #6ab187;
+      --amber:      #d4924a;
+      --red:        #c0645a;
+      --red-bg:     #2a1a1a;
+      --amber-bg:   #2a1e10;
+      --accent-bg:  #1e1a10;
+      --green-bg:   #0f1e15;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'JetBrains Mono', 'Cascadia Code', 'Fira Code', 'Courier New', monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── Top bar ── */
+    #topbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 16px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+    }
+    .logo { color: var(--accent); font-size: 13px; font-weight: 700; letter-spacing: .12em; }
+    .sep  { color: var(--border); }
+    #vault-name { color: var(--muted); font-size: 11px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    #open-btn {
+      background: transparent;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-family: inherit;
+      font-size: 11px;
+      padding: 4px 12px;
+      cursor: pointer;
+      letter-spacing: .05em;
+      flex-shrink: 0;
+    }
+    #open-btn:hover { background: var(--accent); color: var(--bg); }
+
+    /* ── Landing ── */
+    #landing {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 18px;
+      padding: 40px 20px;
+      text-align: center;
+    }
+    #landing h1       { color: var(--accent); font-size: 16px; letter-spacing: .18em; }
+    #landing p        { color: var(--muted); font-size: 12px; max-width: 380px; line-height: 1.9; }
+    #landing .open-big {
+      background: var(--accent);
+      color: var(--bg);
+      border: none;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 11px 32px;
+      cursor: pointer;
+      letter-spacing: .08em;
+    }
+    #landing .open-big:hover { background: var(--text); }
+    #landing .fallback   { color: var(--muted); font-size: 11px; cursor: pointer; text-decoration: underline; }
+    #landing .demo-link  { color: var(--accent); font-size: 11px; cursor: pointer; }
+    #landing .demo-link:hover { text-decoration: underline; }
+
+    /* ── App shell ── */
+    #app { flex: 1; display: none; overflow: hidden; }
+    #app.visible { display: flex; }
+
+    /* ── Sidebar ── */
+    #sidebar {
+      width: 190px;
+      flex-shrink: 0;
+      border-right: 1px solid var(--border);
+      background: var(--surface);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+    .nav-group        { padding: 14px 0 6px; }
+    .nav-group-title  { padding: 0 14px 5px; font-size: 10px; color: var(--muted); letter-spacing: .15em; }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 7px 14px;
+      cursor: pointer;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .nav-item:hover                     { background: var(--surface2); color: var(--text); }
+    .nav-item.active                    { color: var(--accent); background: var(--surface2); border-left: 2px solid var(--accent); padding-left: 12px; }
+    .nav-count                          { font-size: 10px; background: var(--border); color: var(--muted); padding: 1px 6px; border-radius: 8px; }
+    .nav-item.active .nav-count         { background: var(--accent-bg); color: var(--accent); }
+    hr.sep                              { border: none; border-top: 1px solid var(--border); margin: 6px 0; }
+    .vault-meta { padding: 12px 14px; font-size: 11px; color: var(--muted); line-height: 1.9; }
+    .vault-meta strong { color: var(--text); font-weight: 400; }
+
+    /* ── Content ── */
+    #content { flex: 1; display: flex; overflow: hidden; }
+
+    /* ── List panel ── */
+    #list-panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    .list-header {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+    .list-header h2   { font-size: 10px; letter-spacing: .15em; color: var(--muted); }
+    .list-count-badge { font-size: 10px; color: var(--muted); }
+    .search-wrap { padding: 8px 14px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+    #search {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 12px;
+      padding: 6px 10px;
+      outline: none;
+    }
+    #search:focus       { border-color: var(--accent); }
+    #search::placeholder { color: var(--muted); }
+    #list-body          { overflow-y: auto; flex: 1; }
+
+    /* ── Cards ── */
+    .card {
+      border-bottom: 1px solid var(--border);
+      padding: 11px 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .card:hover             { background: var(--surface); }
+    .card.selected          { background: var(--surface); border-left: 2px solid var(--accent); padding-left: 12px; }
+    .card-main              { flex: 1; min-width: 0; }
+    .card-title             { font-size: 13px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .card-sub               { font-size: 11px; color: var(--muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .card-right             { flex-shrink: 0; }
+
+    /* ── Badges ── */
+    .badge { display: inline-block; font-size: 10px; padding: 2px 7px; letter-spacing: .04em; white-space: nowrap; }
+
+    /* ── Detail panel ── */
+    #detail-panel {
+      width: 340px;
+      flex-shrink: 0;
+      border-left: 1px solid var(--border);
+      overflow-y: auto;
+      background: var(--surface);
+    }
+    #detail-panel.hidden { display: none; }
+
+    .detail-hdr  { padding: 14px; border-bottom: 1px solid var(--border); }
+    .detail-name { font-size: 14px; color: var(--text); margin-bottom: 4px; }
+    .detail-sub  { font-size: 11px; color: var(--muted); }
+
+    .detail-sec       { padding: 10px 14px; border-bottom: 1px solid var(--border); }
+    .detail-sec-title { font-size: 10px; color: var(--muted); letter-spacing: .15em; margin-bottom: 6px; }
+    .drow             { display: flex; gap: 8px; margin-bottom: 5px; font-size: 12px; }
+    .dkey             { color: var(--muted); min-width: 80px; flex-shrink: 0; }
+    .dval             { color: var(--text); word-break: break-word; }
+
+    .locked-banner {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      padding: 9px 12px;
+      font-size: 11px;
+      color: var(--muted);
+      text-align: center;
+    }
+    .locked-banner .lock-icon { color: var(--accent); }
+
+    /* ── Empty / error states ── */
+    .empty { padding: 48px 24px; text-align: center; color: var(--muted); font-size: 12px; line-height: 1.9; }
+    .empty .glyph { font-size: 22px; margin-bottom: 10px; }
+    .err-banner { background: var(--red-bg); border: 1px solid var(--red); color: var(--red); padding: 9px 14px; font-size: 12px; margin: 12px 14px; }
+    #error-strip { flex-shrink: 0; }
+
+    /* ── Loading ── */
+    #loading { display: none; padding: 48px; text-align: center; color: var(--muted); font-size: 12px; }
+    #loading.visible { display: block; }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); }
+    ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+    /* ── Responsive ── */
+    @media (max-width: 640px) {
+      #sidebar      { display: none; }
+      #detail-panel { display: none !important; }
+    }
+    @media (max-width: 900px) {
+      #detail-panel { width: 280px; }
+    }
+
+    #file-input { display: none; }
+  </style>
+</head>
+<body>
+
+<!-- ── Top bar ───────────────────────────────────────────────────────── -->
+<div id="topbar">
+  <span class="logo">HOMEVAULT</span>
+  <span class="sep">/</span>
+  <span id="vault-name">no vault loaded</span>
+  <button id="open-btn" onclick="openVault()">open vault</button>
+</div>
+
+<!-- ── Landing ──────────────────────────────────────────────────────── -->
+<div id="landing">
+  <h1>// VAULT VIEWER</h1>
+  <p>
+    Browse your HomeVault data in any browser.<br>
+    Nothing is uploaded. Everything stays on your device.
+  </p>
+  <button class="open-big" onclick="openVault()">open vault folder</button>
+  <span class="fallback" onclick="triggerFileInput()">browser doesn't support folder picker? select files →</span>
+  <span id="demo-btn" class="demo-link" style="display:none" onclick="loadDemo()">or load demo vault →</span>
+</div>
+
+<!-- ── App ───────────────────────────────────────────────────────────── -->
+<div id="app">
+  <div id="sidebar">
+    <div class="nav-group">
+      <div class="nav-group-title">VAULT</div>
+      <div class="nav-item active" data-sec="items"      onclick="switchSection('items')">items      <span class="nav-count" id="cnt-items">0</span></div>
+      <div class="nav-item"        data-sec="tasks"      onclick="switchSection('tasks')">tasks      <span class="nav-count" id="cnt-tasks">0</span></div>
+      <div class="nav-item"        data-sec="checklists" onclick="switchSection('checklists')">checklists <span class="nav-count" id="cnt-checklists">0</span></div>
+      <div class="nav-item"        data-sec="rooms"      onclick="switchSection('rooms')">rooms      <span class="nav-count" id="cnt-rooms">0</span></div>
+    </div>
+    <hr class="sep">
+    <div class="vault-meta" id="vault-meta"></div>
+  </div>
+
+  <div id="content">
+    <div id="list-panel">
+      <div id="error-strip"></div>
+      <div class="list-header">
+        <h2 id="sec-title">ITEMS</h2>
+        <span class="list-count-badge" id="sec-count"></span>
+      </div>
+      <div class="search-wrap">
+        <input type="text" id="search" placeholder="filter..." oninput="renderList()">
+      </div>
+      <div id="loading">loading...</div>
+      <div id="list-body"></div>
+    </div>
+    <div id="detail-panel" class="hidden"></div>
+  </div>
+</div>
+
+<input type="file" id="file-input" webkitdirectory multiple onchange="loadFromFiles(event)">
+
+<script>
+/* ─────────────────────────────────────────────────────────────────────────
+   CONFIG
+   When embedding this viewer on a website with pre-built demo data, set
+   DEMO_BASE_URL to the URL prefix where the demo vault JSON files live,
+   e.g. "/demo-vault/". Leave as null to hide the demo button.
+──────────────────────────────────────────────────────────────────────────── */
+const CONFIG = {
+  DEMO_BASE_URL: null   // e.g. "/demo-vault/"  — set by the hosting page
+};
+
+// ── State ──────────────────────────────────────────────────────────────────
+let V = null;           // loaded vault: { index, meta, name, read }
+let section = 'items';
+let selectedId = null;
+
+// ── Boot ───────────────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  if (CONFIG.DEMO_BASE_URL) {
+    document.getElementById('demo-btn').style.display = '';
+  }
+});
+
+// ── Open vault ─────────────────────────────────────────────────────────────
+async function openVault() {
+  if ('showDirectoryPicker' in window) {
+    try {
+      const dh = await window.showDirectoryPicker({ mode: 'read' });
+      await loadFromDirHandle(dh);
+    } catch (e) {
+      if (e.name !== 'AbortError') showError(e.message);
+    }
+  } else {
+    triggerFileInput();
+  }
+}
+
+function triggerFileInput() {
+  document.getElementById('file-input').click();
+}
+
+// ── File System Access API ─────────────────────────────────────────────────
+async function loadFromDirHandle(dh) {
+  setLoading(true);
+  try {
+    const read = async (path) => {
+      const parts = path.split('/').filter(Boolean);
+      let handle = dh;
+      for (let i = 0; i < parts.length - 1; i++) {
+        try   { handle = await handle.getDirectoryHandle(parts[i]); }
+        catch { return null; }
+      }
+      try {
+        const fh   = await handle.getFileHandle(parts.at(-1));
+        const file = await fh.getFile();
+        return JSON.parse(await file.text());
+      } catch { return null; }
+    };
+    await initVault(read, dh.name);
+  } catch (e) { showError(e.message); }
+  setLoading(false);
+}
+
+// ── webkitdirectory fallback ───────────────────────────────────────────────
+async function loadFromFiles(ev) {
+  const files = Array.from(ev.target.files);
+  if (!files.length) return;
+  setLoading(true);
+  const map = new Map();
+  for (const f of files) {
+    const rel = f.webkitRelativePath.split('/').slice(1).join('/');
+    map.set(rel, f);
+  }
+  const read = async (path) => {
+    const f = map.get(path);
+    if (!f) return null;
+    try { return JSON.parse(await f.text()); } catch { return null; }
+  };
+  const name = files[0]?.webkitRelativePath.split('/')[0] ?? 'vault';
+  await initVault(read, name);
+  setLoading(false);
+}
+
+// ── Demo mode (website only) ───────────────────────────────────────────────
+async function loadDemo() {
+  if (!CONFIG.DEMO_BASE_URL) return;
+  setLoading(true);
+  const base = CONFIG.DEMO_BASE_URL.replace(/\/$/, '');
+  const read = async (path) => {
+    try {
+      const r = await fetch(`${base}/${path}`);
+      if (!r.ok) return null;
+      return r.json();
+    } catch { return null; }
+  };
+  await initVault(read, 'demo vault');
+  setLoading(false);
+}
+
+// ── Init after load ────────────────────────────────────────────────────────
+async function initVault(read, name) {
+  const index = await read('index.json');
+  if (!index) {
+    showError('index.json not found — is this a HomeVault folder?');
+    return;
+  }
+  const meta = await read('vault.meta.json') ?? {};
+  V = { index, meta, name, read };
+
+  clearError();
+  document.getElementById('vault-name').textContent = name;
+
+  // Nav counts
+  document.getElementById('cnt-items').textContent      = V.index.items?.length      ?? 0;
+  document.getElementById('cnt-tasks').textContent      = V.index.tasks?.length      ?? 0;
+  document.getElementById('cnt-checklists').textContent = V.index.checklists?.length ?? 0;
+  document.getElementById('cnt-rooms').textContent      = V.index.rooms?.length      ?? 0;
+
+  // Sidebar meta
+  const enc        = meta.encryptionEnabled ?? false;
+  const updated    = index.lastUpdated ? new Date(index.lastUpdated).toLocaleDateString() : '—';
+  const schema     = meta.schemaVersion ?? '1.0';
+  document.getElementById('vault-meta').innerHTML = `
+    <strong>encryption</strong><br>
+    <span style="color:${enc ? 'var(--green)' : 'var(--muted)'}">${enc ? '🔒 enabled' : '🔓 disabled'}</span>
+    <br><br>
+    <strong>last updated</strong><br>${updated}
+    <br><br>
+    <strong>schema</strong><br>v${schema}`;
+
+  document.getElementById('landing').style.display = 'none';
+  document.getElementById('app').classList.add('visible');
+  selectedId = null;
+  switchSection('items');
+}
+
+// ── Navigation ─────────────────────────────────────────────────────────────
+function switchSection(sec) {
+  section    = sec;
+  selectedId = null;
+  document.getElementById('search').value = '';
+  document.getElementById('detail-panel').classList.add('hidden');
+  document.querySelectorAll('.nav-item').forEach(el =>
+    el.classList.toggle('active', el.dataset.sec === sec));
+  const titles = { items:'ITEMS', tasks:'TASKS', checklists:'CHECKLISTS', rooms:'ROOMS' };
+  document.getElementById('sec-title').textContent = titles[sec];
+  renderList();
+}
+
+// ── List rendering ─────────────────────────────────────────────────────────
+function renderList() {
+  if (!V) return;
+  const q    = document.getElementById('search').value.toLowerCase();
+  const body = document.getElementById('list-body');
+  let html   = '';
+
+  if (section === 'items') {
+    const rows = filter(V.index.items, q, i => [i.name, i.category, i.brand, i.model]);
+    document.getElementById('sec-count').textContent = rows.length + ' items';
+    if (!rows.length) { body.innerHTML = emptyState('no items'); return; }
+    html = rows.map(item => {
+      const ws = warrantyStatus(item.warrantyExpiryDate);
+      const room = roomName(item.roomId);
+      return card(item.id, item.name,
+        [item.category, item.brand, room].filter(Boolean).join(' · '),
+        `<span class="badge" style="color:${ws.color};background:${ws.bg}">${ws.text}</span>`,
+        `selectItem('${esc(item.id)}')`);
+    }).join('');
+
+  } else if (section === 'tasks') {
+    const rows = filter(V.index.tasks, q, t => [t.title]);
+    document.getElementById('sec-count').textContent = rows.length + ' tasks';
+    if (!rows.length) { body.innerHTML = emptyState('no tasks'); return; }
+    html = rows.map(task => {
+      const dd      = dueDisplay(task.dueDate);
+      const linked  = task.linkedItemId ? itemName(task.linkedItemId) : null;
+      const recur   = task.scheduleType === 'recurring';
+      return card(task.id, task.title,
+        [linked ?? 'no linked item', recur ? '↻ recurring' : null].filter(Boolean).join(' · '),
+        `<span style="font-size:11px;color:${dd.color}">${dd.text}</span>`,
+        `selectTask('${esc(task.id)}')`);
+    }).join('');
+
+  } else if (section === 'checklists') {
+    const rows = filter(V.index.checklists, q, c => [c.name]);
+    document.getElementById('sec-count').textContent = rows.length + ' checklists';
+    if (!rows.length) { body.innerHTML = emptyState('no checklists'); return; }
+    html = rows.map(cl => {
+      const dd = dueDisplay(cl.dueDate);
+      return card(cl.id, cl.name,
+        (cl.taskCount ?? 0) + ' tasks',
+        `<span style="font-size:11px;color:${dd.color}">${dd.text}</span>`,
+        `selectChecklist('${esc(cl.id)}')`);
+    }).join('');
+
+  } else if (section === 'rooms') {
+    const rows = filter(V.index.rooms, q, r => [r.name]);
+    document.getElementById('sec-count').textContent = rows.length + ' rooms';
+    if (!rows.length) { body.innerHTML = emptyState('no rooms'); return; }
+    html = rows.map(room => {
+      const n = room.itemCount ?? 0;
+      return card(room.id, room.name,
+        n + ' item' + (n !== 1 ? 's' : ''),
+        `<span style="color:var(--muted);font-size:13px">›</span>`,
+        `selectRoom('${esc(room.id)}')`);
+    }).join('');
+  }
+
+  body.innerHTML = html;
+}
+
+function card(id, title, sub, right, onclick) {
+  return `<div class="card${selectedId === id ? ' selected' : ''}" onclick="${onclick}">
+    <div class="card-main">
+      <div class="card-title">${esc(title)}</div>
+      <div class="card-sub">${esc(sub)}</div>
+    </div>
+    <div class="card-right">${right}</div>
+  </div>`;
+}
+
+// ── Detail: Item ───────────────────────────────────────────────────────────
+async function selectItem(id) {
+  selectedId = id;
+  renderList();
+  const panel = document.getElementById('detail-panel');
+  panel.classList.remove('hidden');
+  panel.innerHTML = loadingDetail();
+
+  const item = await V.read(`items/${id}.json`);
+  if (!item) { panel.innerHTML = errDetail('Could not read item file'); return; }
+
+  const ws   = warrantyStatus(item.warrantyExpiryDate);
+  const room = roomName(item.roomId);
+
+  let secretsHtml = '';
+  if (item.hasSecrets) {
+    if (V.meta.encryptionEnabled) {
+      secretsHtml = detailSection('SENSITIVE DATA',
+        `<div class="locked-banner"><span class="lock-icon">🔒</span> encrypted — open in HomeVault to unlock</div>`);
+    } else {
+      const s = await V.read(`items/${id}.secret.json`);
+      if (s) {
+        secretsHtml = detailSection('SENSITIVE DATA', [
+          drow('serial no.',  s.serialNumber),
+          drow('price',       s.purchasePrice != null ? `${s.currency ?? '$'}${s.purchasePrice}` : null),
+          drow('purchased',   s.purchaseDate),
+          drow('store',       s.store),
+          drow('claim ref',   s.warrantyClaimRef),
+          drow('notes',       s.notes),
+        ].join(''));
+      }
+    }
+  }
+
+  panel.innerHTML = `
+    <div class="detail-hdr">
+      <div class="detail-name">${esc(item.name)}</div>
+      <div class="detail-sub">${esc(item.category)}${item.brand ? ' · ' + esc(item.brand) : ''}</div>
+    </div>
+    ${detailSection('DETAILS', [
+      drow('room',  room),
+      drow('brand', item.brand),
+      drow('model', item.model),
+      drow('notes', item.notes),
+    ].join(''))}
+    ${detailSection('WARRANTY', `
+      <div class="drow">
+        <span class="dkey">status</span>
+        <span class="badge" style="color:${ws.color};background:${ws.bg}">${ws.text}</span>
+      </div>
+      ${drow('expires', item.warrantyExpiryDate)}
+    `)}
+    ${secretsHtml}
+    ${detailSection('META', [
+      drow('id',      item.id),
+      drow('created', item.createdAt ? fmtDate(item.createdAt) : null),
+      drow('updated', item.updatedAt ? fmtDate(item.updatedAt) : null),
+    ].join(''))}`;
+}
+
+// ── Detail: Task ───────────────────────────────────────────────────────────
+async function selectTask(id) {
+  selectedId = id;
+  renderList();
+  const panel = document.getElementById('detail-panel');
+  panel.classList.remove('hidden');
+  panel.innerHTML = loadingDetail();
+
+  const task = await V.read(`tasks/${id}.json`);
+  if (!task) { panel.innerHTML = errDetail('Could not read task file'); return; }
+
+  const dd      = dueDisplay(task.dueDate);
+  const recur   = task.schedule?.type === 'recurring';
+  const linked  = task.linkedItemId ? itemName(task.linkedItemId) : null;
+  const history = (task.completionHistory ?? []).slice(-5).reverse();
+
+  const histHtml = history.length
+    ? history.map(c => drow(fmtDate(c.completedAt), `<span style="color:var(--green)">✓ done</span>`)).join('')
+    : `<div style="color:var(--muted);font-size:11px">no completions recorded</div>`;
+
+  panel.innerHTML = `
+    <div class="detail-hdr">
+      <div class="detail-name">${esc(task.title)}</div>
+      <div class="detail-sub">${recur ? '↻ recurring' : 'one-off'}${linked ? ' · ' + esc(linked) : ''}</div>
+    </div>
+    ${detailSection('SCHEDULE', [
+      `<div class="drow"><span class="dkey">due</span><span style="color:${dd.color}">${dd.text}</span></div>`,
+      recur ? drow('interval', task.schedule.intervalDays + ' days') : '',
+      drow('notes', task.notes),
+    ].join(''))}
+    ${detailSection('HISTORY (last 5)', histHtml)}
+    ${detailSection('META', [
+      drow('id',          task.id),
+      drow('linked item', linked),
+      drow('checklist',   task.checklistId ? checklistName(task.checklistId) : null),
+    ].join(''))}`;
+}
+
+// ── Detail: Checklist ──────────────────────────────────────────────────────
+async function selectChecklist(id) {
+  selectedId = id;
+  renderList();
+  const panel = document.getElementById('detail-panel');
+  panel.classList.remove('hidden');
+  panel.innerHTML = loadingDetail();
+
+  const cl = await V.read(`checklists/${id}.json`);
+  if (!cl) { panel.innerHTML = errDetail('Could not read checklist file'); return; }
+
+  const dd    = dueDisplay(cl.dueDate);
+  const recur = cl.schedule?.type === 'recurring';
+  const tids  = cl.taskIds ?? [];
+
+  const tasksHtml = tids.length
+    ? tids.map(tid => {
+        const t = (V.index.tasks ?? []).find(x => x.id === tid);
+        return `<div class="drow"><span class="dval">${t ? esc(t.title) : esc(tid)}</span></div>`;
+      }).join('')
+    : `<div style="color:var(--muted);font-size:11px">no tasks</div>`;
+
+  panel.innerHTML = `
+    <div class="detail-hdr">
+      <div class="detail-name">${esc(cl.name)}</div>
+      <div class="detail-sub">${tids.length} tasks · ${recur ? '↻ recurring' : 'one-off'}</div>
+    </div>
+    ${detailSection('SCHEDULE', [
+      `<div class="drow"><span class="dkey">due</span><span style="color:${dd.color}">${dd.text}</span></div>`,
+      recur ? drow('interval', cl.schedule.intervalDays + ' days') : '',
+      drow('description', cl.description),
+    ].join(''))}
+    ${detailSection('TASKS', tasksHtml)}`;
+}
+
+// ── Detail: Room ───────────────────────────────────────────────────────────
+async function selectRoom(id) {
+  selectedId = id;
+  renderList();
+  const panel = document.getElementById('detail-panel');
+  panel.classList.remove('hidden');
+  panel.innerHTML = loadingDetail();
+
+  const room = await V.read(`rooms/${id}.json`);
+  if (!room) { panel.innerHTML = errDetail('Could not read room file'); return; }
+
+  const roomItems = (V.index.items ?? []).filter(i => i.roomId === id);
+  const itemsHtml = roomItems.length
+    ? roomItems.map(i => {
+        const ws = warrantyStatus(i.warrantyExpiryDate);
+        return `<div class="drow">
+          <span class="dval" style="flex:1">${esc(i.name)}</span>
+          <span class="badge" style="color:${ws.color};background:${ws.bg};margin-left:8px">${ws.text}</span>
+        </div>`;
+      }).join('')
+    : `<div style="color:var(--muted);font-size:11px">no items in this room</div>`;
+
+  panel.innerHTML = `
+    <div class="detail-hdr">
+      <div class="detail-name">${esc(room.name)}</div>
+      <div class="detail-sub">${roomItems.length} item${roomItems.length !== 1 ? 's' : ''}</div>
+    </div>
+    ${room.notes ? detailSection('NOTES', `<div style="font-size:12px;color:var(--text)">${esc(room.notes)}</div>`) : ''}
+    ${detailSection('ITEMS', itemsHtml)}`;
+}
+
+// ── Domain logic ───────────────────────────────────────────────────────────
+function warrantyStatus(dateStr) {
+  if (!dateStr) return { text: 'no warranty', color: 'var(--muted)', bg: 'transparent' };
+  const expiry   = new Date(dateStr + 'T00:00:00');
+  const daysLeft = Math.floor((expiry - Date.now()) / 86400000);
+  if (daysLeft < 0)   return { text: 'expired',           color: 'var(--red)',    bg: 'var(--red-bg)'    };
+  if (daysLeft <= 30) return { text: daysLeft + 'd left',  color: 'var(--amber)',  bg: 'var(--amber-bg)'  };
+  if (daysLeft <= 90) return { text: daysLeft + 'd left',  color: 'var(--accent)', bg: 'var(--accent-bg)' };
+  return { text: Math.floor(daysLeft / 30) + 'mo left',   color: 'var(--green)',  bg: 'var(--green-bg)'  };
+}
+
+function dueDisplay(dateStr) {
+  if (!dateStr) return { text: 'no due date', color: 'var(--muted)' };
+  const days = Math.floor((new Date(dateStr + 'T00:00:00') - Date.now()) / 86400000);
+  if (days < -1)  return { text: Math.abs(days) + 'd overdue', color: 'var(--red)'    };
+  if (days <= 0)  return { text: 'due today',                  color: 'var(--amber)'  };
+  if (days <= 7)  return { text: 'in ' + days + 'd',           color: 'var(--amber)'  };
+  if (days <= 30) return { text: 'in ' + days + 'd',           color: 'var(--accent)' };
+  return { text: 'in ' + Math.floor(days / 30) + 'mo',        color: 'var(--green)'  };
+}
+
+function roomName(id) {
+  return id ? (V.index.rooms ?? []).find(r => r.id === id)?.name ?? null : null;
+}
+function itemName(id) {
+  return id ? (V.index.items ?? []).find(i => i.id === id)?.name ?? null : null;
+}
+function checklistName(id) {
+  return id ? (V.index.checklists ?? []).find(c => c.id === id)?.name ?? null : null;
+}
+
+// ── HTML helpers ───────────────────────────────────────────────────────────
+function filter(arr, q, fields) {
+  if (!arr) return [];
+  if (!q)   return arr;
+  return arr.filter(x => fields(x).some(f => f && f.toLowerCase().includes(q)));
+}
+
+function detailSection(title, body) {
+  return `<div class="detail-sec">
+    <div class="detail-sec-title">${title}</div>
+    ${body}
+  </div>`;
+}
+
+function drow(key, val) {
+  if (val == null || val === '') return '';
+  return `<div class="drow"><span class="dkey">${key}</span><span class="dval">${esc(String(val))}</span></div>`;
+}
+
+function emptyState(msg) {
+  return `<div class="empty"><div class="glyph">∅</div>${msg}</div>`;
+}
+function loadingDetail() {
+  return `<div class="detail-hdr"><div class="detail-name" style="color:var(--muted)">loading...</div></div>`;
+}
+function errDetail(msg) {
+  return `<div class="detail-hdr"><div class="detail-name" style="color:var(--red)">${esc(msg)}</div></div>`;
+}
+
+function fmtDate(iso) {
+  return iso ? new Date(iso).toLocaleDateString() : null;
+}
+
+function esc(str) {
+  if (str == null) return '';
+  return String(str)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+// ── UI state ───────────────────────────────────────────────────────────────
+function setLoading(on) {
+  document.getElementById('loading').classList.toggle('visible', on);
+}
+function showError(msg) {
+  document.getElementById('error-strip').innerHTML =
+    `<div class="err-banner">error: ${esc(msg)}</div>`;
+}
+function clearError() {
+  document.getElementById('error-strip').innerHTML = '';
+}
+</script>
+</body>
+</html>
