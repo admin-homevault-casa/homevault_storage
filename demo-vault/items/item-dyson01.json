@@ -1,0 +1,13 @@
+{
+  "id": "item-dyson01",
+  "name": "Dyson V15 Detect",
+  "category": "Appliances",
+  "roomId": "room-utility",
+  "brand": "Dyson",
+  "model": "V15 Detect",
+  "warrantyExpiryDate": "2026-12-01",
+  "notes": "Filter cleaned monthly. Stored on wall dock in utility room. Do not use outdoors.",
+  "hasSecrets": true,
+  "createdAt": "2025-12-01T11:00:00Z",
+  "updatedAt": "2025-12-01T11:00:00Z"
+}

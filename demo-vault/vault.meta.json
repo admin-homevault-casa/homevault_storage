@@ -1,0 +1,6 @@
+{
+  "schemaVersion": 1,
+  "encryptionEnabled": false,
+  "kdfSalt": null,
+  "kdfIterations": 200000
+}

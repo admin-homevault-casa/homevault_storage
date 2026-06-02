@@ -1,0 +1,184 @@
+{
+  "items": [
+    {
+      "id": "item-tv01",
+      "name": "Samsung 65\" QLED TV",
+      "category": "Electronics",
+      "roomId": "room-living",
+      "brand": "Samsung",
+      "model": "QN65S90C",
+      "warrantyExpiryDate": "2027-02-01",
+      "hasSecrets": true
+    },
+    {
+      "id": "item-fridge01",
+      "name": "LG French Door Refrigerator",
+      "category": "Appliances",
+      "roomId": "room-kitchen",
+      "brand": "LG",
+      "model": "LRMVS3006S",
+      "warrantyExpiryDate": "2024-03-15",
+      "hasSecrets": true
+    },
+    {
+      "id": "item-dish01",
+      "name": "Bosch 800 Series Dishwasher",
+      "category": "Appliances",
+      "roomId": "room-kitchen",
+      "brand": "Bosch",
+      "model": "SHPM88Z75N",
+      "warrantyExpiryDate": "2027-08-01",
+      "hasSecrets": true
+    },
+    {
+      "id": "item-dyson01",
+      "name": "Dyson V15 Detect",
+      "category": "Appliances",
+      "roomId": "room-utility",
+      "brand": "Dyson",
+      "model": "V15 Detect",
+      "warrantyExpiryDate": "2026-12-01",
+      "hasSecrets": true
+    },
+    {
+      "id": "item-hvac01",
+      "name": "Lennox XC21 HVAC System",
+      "category": "HVAC",
+      "roomId": "room-garage",
+      "brand": "Lennox",
+      "model": "XC21-036",
+      "warrantyExpiryDate": "2025-01-15",
+      "hasSecrets": false
+    },
+    {
+      "id": "item-heater01",
+      "name": "Rheem Performance Water Heater",
+      "category": "Plumbing",
+      "roomId": "room-utility",
+      "brand": "Rheem",
+      "model": "XE50T12EK55U1",
+      "warrantyExpiryDate": "2029-06-01",
+      "hasSecrets": true
+    },
+    {
+      "id": "item-mac01",
+      "name": "MacBook Pro 14\"",
+      "category": "Electronics",
+      "roomId": "room-bedroom",
+      "brand": "Apple",
+      "model": "MBP14 M3 Pro",
+      "warrantyExpiryDate": "2027-05-01",
+      "hasSecrets": true
+    },
+    {
+      "id": "item-washer01",
+      "name": "Whirlpool HE Top Load Washer",
+      "category": "Appliances",
+      "roomId": "room-utility",
+      "brand": "Whirlpool",
+      "model": "WTW8127LW",
+      "warrantyExpiryDate": "2026-07-01",
+      "hasSecrets": true
+    },
+    {
+      "id": "item-nest01",
+      "name": "Nest Learning Thermostat",
+      "category": "Smart Home",
+      "roomId": "room-living",
+      "brand": "Google",
+      "model": "3rd Gen",
+      "warrantyExpiryDate": null,
+      "hasSecrets": false
+    },
+    {
+      "id": "item-car01",
+      "name": "Honda Civic 2022",
+      "category": "Automotive",
+      "roomId": "room-garage",
+      "brand": "Honda",
+      "model": "Civic Sport",
+      "warrantyExpiryDate": "2027-03-15",
+      "hasSecrets": false
+    }
+  ],
+  "tasks": [
+    {
+      "id": "task-hvac-filter",
+      "title": "Change HVAC filter",
+      "linkedItemId": "item-hvac01",
+      "checklistId": "list-fall",
+      "dueDate": "2026-06-13",
+      "scheduleType": "recurring"
+    },
+    {
+      "id": "task-smoke",
+      "title": "Test smoke & CO detectors",
+      "linkedItemId": null,
+      "checklistId": "list-fall",
+      "dueDate": "2026-07-16",
+      "scheduleType": "recurring"
+    },
+    {
+      "id": "task-fridge-coils",
+      "title": "Clean refrigerator coils",
+      "linkedItemId": "item-fridge01",
+      "checklistId": null,
+      "dueDate": "2026-09-01",
+      "scheduleType": "recurring"
+    },
+    {
+      "id": "task-dish-descale",
+      "title": "Descale dishwasher",
+      "linkedItemId": "item-dish01",
+      "checklistId": "list-monthly",
+      "dueDate": "2026-05-27",
+      "scheduleType": "recurring"
+    },
+    {
+      "id": "task-dyson-filter",
+      "title": "Clean Dyson filter",
+      "linkedItemId": "item-dyson01",
+      "checklistId": "list-monthly",
+      "dueDate": "2026-06-01",
+      "scheduleType": "recurring"
+    },
+    {
+      "id": "task-heater-flush",
+      "title": "Flush water heater",
+      "linkedItemId": "item-heater01",
+      "checklistId": "list-fall",
+      "dueDate": "2027-02-01",
+      "scheduleType": "recurring"
+    },
+    {
+      "id": "task-oil-change",
+      "title": "Car oil change",
+      "linkedItemId": "item-car01",
+      "checklistId": null,
+      "dueDate": "2026-06-23",
+      "scheduleType": "recurring"
+    }
+  ],
+  "checklists": [
+    {
+      "id": "list-fall",
+      "name": "Fall Home Maintenance",
+      "dueDate": "2026-10-01",
+      "taskCount": 3
+    },
+    {
+      "id": "list-monthly",
+      "name": "Monthly Appliance Check",
+      "dueDate": "2026-06-08",
+      "taskCount": 2
+    }
+  ],
+  "rooms": [
+    { "id": "room-kitchen",  "name": "Kitchen",        "itemCount": 2 },
+    { "id": "room-living",   "name": "Living Room",    "itemCount": 2 },
+    { "id": "room-bedroom",  "name": "Master Bedroom", "itemCount": 1 },
+    { "id": "room-garage",   "name": "Garage",         "itemCount": 2 },
+    { "id": "room-utility",  "name": "Utility Room",   "itemCount": 3 }
+  ],
+  "lastUpdated": "2026-06-01T09:15:00Z"
+}

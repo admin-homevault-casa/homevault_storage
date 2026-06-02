@@ -1,0 +1,20 @@
+{
+  "id": "task-dish-descale",
+  "title": "Descale dishwasher",
+  "notes": "Run Bosch descaler tablet on hot wash cycle with empty machine. Also wipe door seal and clean filter basket. OVERDUE.",
+  "linkedItemId": "item-dish01",
+  "checklistId": "list-monthly",
+  "schedule": {
+    "type": "recurring",
+    "intervalDays": 90,
+    "anchor": "lastCompleted"
+  },
+  "dueDate": "2026-05-27",
+  "completionHistory": [
+    { "date": "2025-08-30", "completedBy": "self" },
+    { "date": "2025-11-28", "completedBy": "self" },
+    { "date": "2026-02-25", "completedBy": "self" }
+  ],
+  "createdAt": "2025-08-05T16:00:00Z",
+  "updatedAt": "2026-02-25T14:00:00Z"
+}

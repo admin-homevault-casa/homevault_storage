@@ -1,0 +1,13 @@
+{
+  "id": "item-tv01",
+  "name": "Samsung 65\" QLED TV",
+  "category": "Electronics",
+  "roomId": "room-living",
+  "brand": "Samsung",
+  "model": "QN65S90C",
+  "warrantyExpiryDate": "2027-02-01",
+  "notes": "Mounted above fireplace. Use only Samsung-approved mounts. Remote stored in left drawer.",
+  "hasSecrets": true,
+  "createdAt": "2025-02-10T14:30:00Z",
+  "updatedAt": "2025-02-10T14:30:00Z"
+}

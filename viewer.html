@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>HomeVault Viewer</title>
+  <meta name="description" content="Browse a HomeVault data store in any browser. No upload, no server. Everything stays local.">
   <style>
     /* ── Design tokens ── */
     :root {
@@ -37,7 +38,7 @@
       overflow: hidden;
     }
 
-    /* ── Top bar ── */
+    /* ── App top bar ── */
     #topbar {
       display: flex;
       align-items: center;
@@ -47,9 +48,9 @@
       background: var(--surface);
       flex-shrink: 0;
     }
-    .logo { color: var(--accent); font-size: 13px; font-weight: 700; letter-spacing: .12em; }
-    .sep  { color: var(--border); }
-    #vault-name { color: var(--muted); font-size: 11px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .logo        { color: var(--accent); font-size: 13px; font-weight: 700; letter-spacing: .12em; }
+    .sep         { color: var(--border); }
+    #vault-name  { color: var(--muted); font-size: 11px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     #open-btn {
       background: transparent;
       border: 1px solid var(--accent);
@@ -74,8 +75,8 @@
       padding: 40px 20px;
       text-align: center;
     }
-    #landing h1       { color: var(--accent); font-size: 16px; letter-spacing: .18em; }
-    #landing p        { color: var(--muted); font-size: 12px; max-width: 380px; line-height: 1.9; }
+    #landing h1      { color: var(--accent); font-size: 16px; letter-spacing: .18em; }
+    #landing p       { color: var(--muted); font-size: 12px; max-width: 400px; line-height: 1.9; }
     #landing .open-big {
       background: var(--accent);
       color: var(--bg);
@@ -87,14 +88,33 @@
       cursor: pointer;
       letter-spacing: .08em;
     }
-    #landing .open-big:hover { background: var(--text); }
-    #landing .fallback   { color: var(--muted); font-size: 11px; cursor: pointer; text-decoration: underline; }
-    #landing .demo-link  { color: var(--accent); font-size: 11px; cursor: pointer; }
+    #landing .open-big:hover  { background: var(--text); }
+    #landing .fallback        { color: var(--muted); font-size: 11px; cursor: pointer; text-decoration: underline; }
+    #landing .demo-link       { color: var(--accent); font-size: 12px; cursor: pointer; }
     #landing .demo-link:hover { text-decoration: underline; }
+    #landing .divider         { color: var(--border); font-size: 11px; }
+    #landing .demo-note       { color: var(--muted); font-size: 11px; max-width: 360px; line-height: 1.8; }
+    #landing .demo-note code  { color: var(--accent); font-family: inherit; }
 
     /* ── App shell ── */
     #app { flex: 1; display: none; overflow: hidden; }
     #app.visible { display: flex; }
+
+    /* ── Demo banner ── */
+    #demo-banner {
+      background: var(--accent-bg);
+      border-bottom: 1px solid var(--accent);
+      color: var(--accent);
+      font-size: 11px;
+      padding: 6px 16px;
+      display: none;
+      flex-shrink: 0;
+      align-items: center;
+      gap: 12px;
+    }
+    #demo-banner.visible { display: flex; }
+    #demo-banner .dbright { margin-left: auto; cursor: pointer; color: var(--muted); }
+    #demo-banner .dbright:hover { color: var(--text); }
 
     /* ── Sidebar ── */
     #sidebar {
@@ -117,11 +137,11 @@
       color: var(--muted);
       font-size: 12px;
     }
-    .nav-item:hover                     { background: var(--surface2); color: var(--text); }
-    .nav-item.active                    { color: var(--accent); background: var(--surface2); border-left: 2px solid var(--accent); padding-left: 12px; }
-    .nav-count                          { font-size: 10px; background: var(--border); color: var(--muted); padding: 1px 6px; border-radius: 8px; }
-    .nav-item.active .nav-count         { background: var(--accent-bg); color: var(--accent); }
-    hr.sep                              { border: none; border-top: 1px solid var(--border); margin: 6px 0; }
+    .nav-item:hover               { background: var(--surface2); color: var(--text); }
+    .nav-item.active              { color: var(--accent); background: var(--surface2); border-left: 2px solid var(--accent); padding-left: 12px; }
+    .nav-count                    { font-size: 10px; background: var(--border); color: var(--muted); padding: 1px 6px; border-radius: 8px; }
+    .nav-item.active .nav-count   { background: var(--accent-bg); color: var(--accent); }
+    hr.hsep                       { border: none; border-top: 1px solid var(--border); margin: 6px 0; }
     .vault-meta { padding: 12px 14px; font-size: 11px; color: var(--muted); line-height: 1.9; }
     .vault-meta strong { color: var(--text); font-weight: 400; }
 
@@ -151,9 +171,9 @@
       padding: 6px 10px;
       outline: none;
     }
-    #search:focus       { border-color: var(--accent); }
+    #search:focus        { border-color: var(--accent); }
     #search::placeholder { color: var(--muted); }
-    #list-body          { overflow-y: auto; flex: 1; }
+    #list-body           { overflow-y: auto; flex: 1; }
 
     /* ── Cards ── */
     .card {
@@ -164,12 +184,12 @@
       align-items: center;
       gap: 10px;
     }
-    .card:hover             { background: var(--surface); }
-    .card.selected          { background: var(--surface); border-left: 2px solid var(--accent); padding-left: 12px; }
-    .card-main              { flex: 1; min-width: 0; }
-    .card-title             { font-size: 13px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .card-sub               { font-size: 11px; color: var(--muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .card-right             { flex-shrink: 0; }
+    .card:hover       { background: var(--surface); }
+    .card.selected    { background: var(--surface); border-left: 2px solid var(--accent); padding-left: 12px; }
+    .card-main        { flex: 1; min-width: 0; }
+    .card-title       { font-size: 13px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .card-sub         { font-size: 11px; color: var(--muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .card-right       { flex-shrink: 0; }
 
     /* ── Badges ── */
     .badge { display: inline-block; font-size: 10px; padding: 2px 7px; letter-spacing: .04em; white-space: nowrap; }
@@ -202,9 +222,9 @@
       color: var(--muted);
       text-align: center;
     }
-    .locked-banner .lock-icon { color: var(--accent); }
+    .locked-banner .lock { color: var(--accent); }
 
-    /* ── Empty / error states ── */
+    /* ── Empty / error ── */
     .empty { padding: 48px 24px; text-align: center; color: var(--muted); font-size: 12px; line-height: 1.9; }
     .empty .glyph { font-size: 22px; margin-bottom: 10px; }
     .err-banner { background: var(--red-bg); border: 1px solid var(--red); color: var(--red); padding: 9px 14px; font-size: 12px; margin: 12px 14px; }
@@ -234,7 +254,13 @@
 </head>
 <body>
 
-<!-- ── Top bar ───────────────────────────────────────────────────────── -->
+<!-- ── Demo banner ───────────────────────────────────────────────────────── -->
+<div id="demo-banner">
+  <span>// viewing demo vault — <a href="#" onclick="openVault();return false;" style="color:var(--accent)">open your own vault folder</a> to browse real data</span>
+  <span class="dbright" onclick="document.getElementById('demo-banner').classList.remove('visible')">✕</span>
+</div>
+
+<!-- ── Top bar ───────────────────────────────────────────────────────────── -->
 <div id="topbar">
   <span class="logo">HOMEVAULT</span>
   <span class="sep">/</span>
@@ -242,19 +268,25 @@
   <button id="open-btn" onclick="openVault()">open vault</button>
 </div>
 
-<!-- ── Landing ──────────────────────────────────────────────────────── -->
+<!-- ── Landing ──────────────────────────────────────────────────────────── -->
 <div id="landing">
   <h1>// VAULT VIEWER</h1>
   <p>
-    Browse your HomeVault data in any browser.<br>
+    Browse your HomeVault data store in any browser.<br>
     Nothing is uploaded. Everything stays on your device.
   </p>
   <button class="open-big" onclick="openVault()">open vault folder</button>
-  <span class="fallback" onclick="triggerFileInput()">browser doesn't support folder picker? select files →</span>
-  <span id="demo-btn" class="demo-link" style="display:none" onclick="loadDemo()">or load demo vault →</span>
+  <span class="divider">— or —</span>
+  <span class="demo-link" id="demo-btn" onclick="loadDemo()">explore the demo vault →</span>
+  <p class="demo-note">
+    Demo requires a local server:<br>
+    <code>python -m http.server 8000</code><br>
+    then open <code>http://localhost:8000/viewer.html</code>
+  </p>
+  <span class="fallback" onclick="triggerFileInput()">folder picker not supported? select files manually →</span>
 </div>
 
-<!-- ── App ───────────────────────────────────────────────────────────── -->
+<!-- ── App ───────────────────────────────────────────────────────────────── -->
 <div id="app">
   <div id="sidebar">
     <div class="nav-group">
@@ -264,7 +296,7 @@
       <div class="nav-item"        data-sec="checklists" onclick="switchSection('checklists')">checklists <span class="nav-count" id="cnt-checklists">0</span></div>
       <div class="nav-item"        data-sec="rooms"      onclick="switchSection('rooms')">rooms      <span class="nav-count" id="cnt-rooms">0</span></div>
     </div>
-    <hr class="sep">
+    <hr class="hsep">
     <div class="vault-meta" id="vault-meta"></div>
   </div>
 
@@ -288,33 +320,28 @@
 <input type="file" id="file-input" webkitdirectory multiple onchange="loadFromFiles(event)">
 
 <script>
-/* ─────────────────────────────────────────────────────────────────────────
-   CONFIG
-   When embedding this viewer on a website with pre-built demo data, set
-   DEMO_BASE_URL to the URL prefix where the demo vault JSON files live,
-   e.g. "/demo-vault/". Leave as null to hide the demo button.
-──────────────────────────────────────────────────────────────────────────── */
+/* ── Config ─────────────────────────────────────────────────────────────────
+   DEMO_BASE_URL: path to a served demo-vault directory.
+   Works when served via a local HTTP server (e.g. python -m http.server).
+   Does NOT work when opened directly as a file:// URL (browser security).
+   Set to null to hide the demo button entirely.
+────────────────────────────────────────────────────────────────────────────── */
 const CONFIG = {
-  DEMO_BASE_URL: null   // e.g. "/demo-vault/"  — set by the hosting page
+  DEMO_BASE_URL: './demo-vault'
 };
 
-// ── State ──────────────────────────────────────────────────────────────────
-let V = null;           // loaded vault: { index, meta, name, read }
-let section = 'items';
+/* ── State ─────────────────────────────────────────────────────────────── */
+let V          = null;
+let section    = 'items';
 let selectedId = null;
+let isDemo     = false;
 
-// ── Boot ───────────────────────────────────────────────────────────────────
-window.addEventListener('DOMContentLoaded', () => {
-  if (CONFIG.DEMO_BASE_URL) {
-    document.getElementById('demo-btn').style.display = '';
-  }
-});
-
-// ── Open vault ─────────────────────────────────────────────────────────────
+/* ── Open vault ─────────────────────────────────────────────────────────── */
 async function openVault() {
   if ('showDirectoryPicker' in window) {
     try {
       const dh = await window.showDirectoryPicker({ mode: 'read' });
+      isDemo   = false;
       await loadFromDirHandle(dh);
     } catch (e) {
       if (e.name !== 'AbortError') showError(e.message);
@@ -328,13 +355,13 @@ function triggerFileInput() {
   document.getElementById('file-input').click();
 }
 
-// ── File System Access API ─────────────────────────────────────────────────
+/* ── File System Access API ──────────────────────────────────────────────── */
 async function loadFromDirHandle(dh) {
   setLoading(true);
   try {
     const read = async (path) => {
       const parts = path.split('/').filter(Boolean);
-      let handle = dh;
+      let handle  = dh;
       for (let i = 0; i < parts.length - 1; i++) {
         try   { handle = await handle.getDirectoryHandle(parts[i]); }
         catch { return null; }
@@ -350,11 +377,12 @@ async function loadFromDirHandle(dh) {
   setLoading(false);
 }
 
-// ── webkitdirectory fallback ───────────────────────────────────────────────
+/* ── webkitdirectory fallback ────────────────────────────────────────────── */
 async function loadFromFiles(ev) {
   const files = Array.from(ev.target.files);
   if (!files.length) return;
   setLoading(true);
+  isDemo = false;
   const map = new Map();
   for (const f of files) {
     const rel = f.webkitRelativePath.split('/').slice(1).join('/');
@@ -370,11 +398,12 @@ async function loadFromFiles(ev) {
   setLoading(false);
 }
 
-// ── Demo mode (website only) ───────────────────────────────────────────────
+/* ── Demo mode ───────────────────────────────────────────────────────────── */
 async function loadDemo() {
   if (!CONFIG.DEMO_BASE_URL) return;
   setLoading(true);
-  const base = CONFIG.DEMO_BASE_URL.replace(/\/$/, '');
+  isDemo     = true;
+  const base = CONFIG.DEMO_BASE_URL;
   const read = async (path) => {
     try {
       const r = await fetch(`${base}/${path}`);
@@ -386,36 +415,33 @@ async function loadDemo() {
   setLoading(false);
 }
 
-// ── Init after load ────────────────────────────────────────────────────────
+/* ── Init ────────────────────────────────────────────────────────────────── */
 async function initVault(read, name) {
   const index = await read('index.json');
-  if (!index) {
-    showError('index.json not found — is this a HomeVault folder?');
-    return;
-  }
-  const meta = await read('vault.meta.json') ?? {};
+  if (!index) { showError('index.json not found — is this a HomeVault folder?'); return; }
+  const meta  = await read('vault.meta.json') ?? {};
   V = { index, meta, name, read };
 
   clearError();
   document.getElementById('vault-name').textContent = name;
 
-  // Nav counts
   document.getElementById('cnt-items').textContent      = V.index.items?.length      ?? 0;
   document.getElementById('cnt-tasks').textContent      = V.index.tasks?.length      ?? 0;
   document.getElementById('cnt-checklists').textContent = V.index.checklists?.length ?? 0;
   document.getElementById('cnt-rooms').textContent      = V.index.rooms?.length      ?? 0;
 
-  // Sidebar meta
-  const enc        = meta.encryptionEnabled ?? false;
-  const updated    = index.lastUpdated ? new Date(index.lastUpdated).toLocaleDateString() : '—';
-  const schema     = meta.schemaVersion ?? '1.0';
+  const enc     = meta.encryptionEnabled ?? false;
+  const updated = index.lastUpdated ? new Date(index.lastUpdated).toLocaleDateString() : '—';
   document.getElementById('vault-meta').innerHTML = `
     <strong>encryption</strong><br>
     <span style="color:${enc ? 'var(--green)' : 'var(--muted)'}">${enc ? '🔒 enabled' : '🔓 disabled'}</span>
     <br><br>
     <strong>last updated</strong><br>${updated}
     <br><br>
-    <strong>schema</strong><br>v${schema}`;
+    <strong>schema</strong><br>v${meta.schemaVersion ?? 1}`;
+
+  if (isDemo) document.getElementById('demo-banner').classList.add('visible');
+  else        document.getElementById('demo-banner').classList.remove('visible');
 
   document.getElementById('landing').style.display = 'none';
   document.getElementById('app').classList.add('visible');
@@ -423,7 +449,7 @@ async function initVault(read, name) {
   switchSection('items');
 }
 
-// ── Navigation ─────────────────────────────────────────────────────────────
+/* ── Navigation ──────────────────────────────────────────────────────────── */
 function switchSection(sec) {
   section    = sec;
   selectedId = null;
@@ -436,66 +462,63 @@ function switchSection(sec) {
   renderList();
 }
 
-// ── List rendering ─────────────────────────────────────────────────────────
+/* ── List rendering ──────────────────────────────────────────────────────── */
 function renderList() {
   if (!V) return;
   const q    = document.getElementById('search').value.toLowerCase();
   const body = document.getElementById('list-body');
-  let html   = '';
 
   if (section === 'items') {
-    const rows = filter(V.index.items, q, i => [i.name, i.category, i.brand, i.model]);
+    const rows = filt(V.index.items, q, i => [i.name, i.category, i.brand, i.model]);
     document.getElementById('sec-count').textContent = rows.length + ' items';
     if (!rows.length) { body.innerHTML = emptyState('no items'); return; }
-    html = rows.map(item => {
-      const ws = warrantyStatus(item.warrantyExpiryDate);
+    body.innerHTML = rows.map(item => {
+      const ws   = warrantyStatus(item.warrantyExpiryDate);
       const room = roomName(item.roomId);
       return card(item.id, item.name,
         [item.category, item.brand, room].filter(Boolean).join(' · '),
         `<span class="badge" style="color:${ws.color};background:${ws.bg}">${ws.text}</span>`,
-        `selectItem('${esc(item.id)}')`);
+        `selectItem('${item.id}')`);
     }).join('');
 
   } else if (section === 'tasks') {
-    const rows = filter(V.index.tasks, q, t => [t.title]);
+    const rows = filt(V.index.tasks, q, t => [t.title]);
     document.getElementById('sec-count').textContent = rows.length + ' tasks';
     if (!rows.length) { body.innerHTML = emptyState('no tasks'); return; }
-    html = rows.map(task => {
-      const dd      = dueDisplay(task.dueDate);
-      const linked  = task.linkedItemId ? itemName(task.linkedItemId) : null;
-      const recur   = task.scheduleType === 'recurring';
+    body.innerHTML = rows.map(task => {
+      const dd     = dueDisplay(task.dueDate);
+      const linked = task.linkedItemId ? itemName(task.linkedItemId) : null;
+      const recur  = task.scheduleType === 'recurring';
       return card(task.id, task.title,
         [linked ?? 'no linked item', recur ? '↻ recurring' : null].filter(Boolean).join(' · '),
         `<span style="font-size:11px;color:${dd.color}">${dd.text}</span>`,
-        `selectTask('${esc(task.id)}')`);
+        `selectTask('${task.id}')`);
     }).join('');
 
   } else if (section === 'checklists') {
-    const rows = filter(V.index.checklists, q, c => [c.name]);
+    const rows = filt(V.index.checklists, q, c => [c.name]);
     document.getElementById('sec-count').textContent = rows.length + ' checklists';
     if (!rows.length) { body.innerHTML = emptyState('no checklists'); return; }
-    html = rows.map(cl => {
+    body.innerHTML = rows.map(cl => {
       const dd = dueDisplay(cl.dueDate);
       return card(cl.id, cl.name,
         (cl.taskCount ?? 0) + ' tasks',
         `<span style="font-size:11px;color:${dd.color}">${dd.text}</span>`,
-        `selectChecklist('${esc(cl.id)}')`);
+        `selectChecklist('${cl.id}')`);
     }).join('');
 
   } else if (section === 'rooms') {
-    const rows = filter(V.index.rooms, q, r => [r.name]);
+    const rows = filt(V.index.rooms, q, r => [r.name]);
     document.getElementById('sec-count').textContent = rows.length + ' rooms';
     if (!rows.length) { body.innerHTML = emptyState('no rooms'); return; }
-    html = rows.map(room => {
+    body.innerHTML = rows.map(room => {
       const n = room.itemCount ?? 0;
       return card(room.id, room.name,
         n + ' item' + (n !== 1 ? 's' : ''),
         `<span style="color:var(--muted);font-size:13px">›</span>`,
-        `selectRoom('${esc(room.id)}')`);
+        `selectRoom('${room.id}')`);
     }).join('');
   }
-
-  body.innerHTML = html;
 }
 
 function card(id, title, sub, right, onclick) {
@@ -508,7 +531,7 @@ function card(id, title, sub, right, onclick) {
   </div>`;
 }
 
-// ── Detail: Item ───────────────────────────────────────────────────────────
+/* ── Detail: Item ────────────────────────────────────────────────────────── */
 async function selectItem(id) {
   selectedId = id;
   renderList();
@@ -525,14 +548,14 @@ async function selectItem(id) {
   let secretsHtml = '';
   if (item.hasSecrets) {
     if (V.meta.encryptionEnabled) {
-      secretsHtml = detailSection('SENSITIVE DATA',
-        `<div class="locked-banner"><span class="lock-icon">🔒</span> encrypted — open in HomeVault to unlock</div>`);
+      secretsHtml = detailSec('SENSITIVE DATA',
+        `<div class="locked-banner"><span class="lock">🔒</span> encrypted — open in HomeVault to unlock</div>`);
     } else {
       const s = await V.read(`items/${id}.secret.json`);
       if (s) {
-        secretsHtml = detailSection('SENSITIVE DATA', [
+        secretsHtml = detailSec('SENSITIVE DATA', [
           drow('serial no.',  s.serialNumber),
-          drow('price',       s.purchasePrice != null ? `${s.currency ?? '$'}${s.purchasePrice}` : null),
+          drow('price',       s.purchasePrice != null ? `${s.currency ?? '$'}${s.purchasePrice.toLocaleString()}` : null),
           drow('purchased',   s.purchaseDate),
           drow('store',       s.store),
           drow('claim ref',   s.warrantyClaimRef),
@@ -547,13 +570,13 @@ async function selectItem(id) {
       <div class="detail-name">${esc(item.name)}</div>
       <div class="detail-sub">${esc(item.category)}${item.brand ? ' · ' + esc(item.brand) : ''}</div>
     </div>
-    ${detailSection('DETAILS', [
+    ${detailSec('DETAILS', [
       drow('room',  room),
       drow('brand', item.brand),
       drow('model', item.model),
       drow('notes', item.notes),
     ].join(''))}
-    ${detailSection('WARRANTY', `
+    ${detailSec('WARRANTY', `
       <div class="drow">
         <span class="dkey">status</span>
         <span class="badge" style="color:${ws.color};background:${ws.bg}">${ws.text}</span>
@@ -561,14 +584,14 @@ async function selectItem(id) {
       ${drow('expires', item.warrantyExpiryDate)}
     `)}
     ${secretsHtml}
-    ${detailSection('META', [
+    ${detailSec('META', [
       drow('id',      item.id),
-      drow('created', item.createdAt ? fmtDate(item.createdAt) : null),
-      drow('updated', item.updatedAt ? fmtDate(item.updatedAt) : null),
+      drow('created', fmtDate(item.createdAt)),
+      drow('updated', fmtDate(item.updatedAt)),
     ].join(''))}`;
 }
 
-// ── Detail: Task ───────────────────────────────────────────────────────────
+/* ── Detail: Task ────────────────────────────────────────────────────────── */
 async function selectTask(id) {
   selectedId = id;
   renderList();
@@ -585,7 +608,7 @@ async function selectTask(id) {
   const history = (task.completionHistory ?? []).slice(-5).reverse();
 
   const histHtml = history.length
-    ? history.map(c => drow(fmtDate(c.completedAt), `<span style="color:var(--green)">✓ done</span>`)).join('')
+    ? history.map(c => drow(fmtDate(c.date), `<span style="color:var(--green)">✓ done</span>`)).join('')
     : `<div style="color:var(--muted);font-size:11px">no completions recorded</div>`;
 
   panel.innerHTML = `
@@ -593,20 +616,20 @@ async function selectTask(id) {
       <div class="detail-name">${esc(task.title)}</div>
       <div class="detail-sub">${recur ? '↻ recurring' : 'one-off'}${linked ? ' · ' + esc(linked) : ''}</div>
     </div>
-    ${detailSection('SCHEDULE', [
+    ${detailSec('SCHEDULE', [
       `<div class="drow"><span class="dkey">due</span><span style="color:${dd.color}">${dd.text}</span></div>`,
       recur ? drow('interval', task.schedule.intervalDays + ' days') : '',
       drow('notes', task.notes),
     ].join(''))}
-    ${detailSection('HISTORY (last 5)', histHtml)}
-    ${detailSection('META', [
+    ${detailSec('HISTORY (last 5)', histHtml)}
+    ${detailSec('META', [
       drow('id',          task.id),
       drow('linked item', linked),
       drow('checklist',   task.checklistId ? checklistName(task.checklistId) : null),
     ].join(''))}`;
 }
 
-// ── Detail: Checklist ──────────────────────────────────────────────────────
+/* ── Detail: Checklist ───────────────────────────────────────────────────── */
 async function selectChecklist(id) {
   selectedId = id;
   renderList();
@@ -628,20 +651,25 @@ async function selectChecklist(id) {
       }).join('')
     : `<div style="color:var(--muted);font-size:11px">no tasks</div>`;
 
+  const histHtml = (cl.completionHistory ?? []).slice(-3).reverse()
+    .map(c => drow(fmtDate(c.date), `<span style="color:var(--green)">✓ ${c.trigger ?? 'done'}</span>`)).join('') ||
+    `<div style="color:var(--muted);font-size:11px">no completions recorded</div>`;
+
   panel.innerHTML = `
     <div class="detail-hdr">
       <div class="detail-name">${esc(cl.name)}</div>
       <div class="detail-sub">${tids.length} tasks · ${recur ? '↻ recurring' : 'one-off'}</div>
     </div>
-    ${detailSection('SCHEDULE', [
+    ${detailSec('SCHEDULE', [
       `<div class="drow"><span class="dkey">due</span><span style="color:${dd.color}">${dd.text}</span></div>`,
       recur ? drow('interval', cl.schedule.intervalDays + ' days') : '',
       drow('description', cl.description),
     ].join(''))}
-    ${detailSection('TASKS', tasksHtml)}`;
+    ${detailSec('TASKS', tasksHtml)}
+    ${detailSec('HISTORY (last 3)', histHtml)}`;
 }
 
-// ── Detail: Room ───────────────────────────────────────────────────────────
+/* ── Detail: Room ────────────────────────────────────────────────────────── */
 async function selectRoom(id) {
   selectedId = id;
   renderList();
@@ -668,15 +696,14 @@ async function selectRoom(id) {
       <div class="detail-name">${esc(room.name)}</div>
       <div class="detail-sub">${roomItems.length} item${roomItems.length !== 1 ? 's' : ''}</div>
     </div>
-    ${room.notes ? detailSection('NOTES', `<div style="font-size:12px;color:var(--text)">${esc(room.notes)}</div>`) : ''}
-    ${detailSection('ITEMS', itemsHtml)}`;
+    ${room.notes ? detailSec('NOTES', `<div style="font-size:12px;color:var(--text)">${esc(room.notes)}</div>`) : ''}
+    ${detailSec('ITEMS', itemsHtml)}`;
 }
 
-// ── Domain logic ───────────────────────────────────────────────────────────
+/* ── Domain logic ────────────────────────────────────────────────────────── */
 function warrantyStatus(dateStr) {
   if (!dateStr) return { text: 'no warranty', color: 'var(--muted)', bg: 'transparent' };
-  const expiry   = new Date(dateStr + 'T00:00:00');
-  const daysLeft = Math.floor((expiry - Date.now()) / 86400000);
+  const daysLeft = Math.floor((new Date(dateStr + 'T00:00:00') - Date.now()) / 86400000);
   if (daysLeft < 0)   return { text: 'expired',           color: 'var(--red)',    bg: 'var(--red-bg)'    };
   if (daysLeft <= 30) return { text: daysLeft + 'd left',  color: 'var(--amber)',  bg: 'var(--amber-bg)'  };
   if (daysLeft <= 90) return { text: daysLeft + 'd left',  color: 'var(--accent)', bg: 'var(--accent-bg)' };
@@ -693,67 +720,36 @@ function dueDisplay(dateStr) {
   return { text: 'in ' + Math.floor(days / 30) + 'mo',        color: 'var(--green)'  };
 }
 
-function roomName(id) {
-  return id ? (V.index.rooms ?? []).find(r => r.id === id)?.name ?? null : null;
-}
-function itemName(id) {
-  return id ? (V.index.items ?? []).find(i => i.id === id)?.name ?? null : null;
-}
-function checklistName(id) {
-  return id ? (V.index.checklists ?? []).find(c => c.id === id)?.name ?? null : null;
-}
+function roomName(id)      { return id ? (V.index.rooms      ?? []).find(r => r.id === id)?.name ?? null : null; }
+function itemName(id)      { return id ? (V.index.items      ?? []).find(i => i.id === id)?.name ?? null : null; }
+function checklistName(id) { return id ? (V.index.checklists ?? []).find(c => c.id === id)?.name ?? null : null; }
 
-// ── HTML helpers ───────────────────────────────────────────────────────────
-function filter(arr, q, fields) {
+/* ── HTML helpers ─────────────────────────────────────────────────────────── */
+function filt(arr, q, fields) {
   if (!arr) return [];
   if (!q)   return arr;
-  return arr.filter(x => fields(x).some(f => f && f.toLowerCase().includes(q)));
+  return arr.filter(x => fields(x).some(f => f && String(f).toLowerCase().includes(q)));
 }
-
-function detailSection(title, body) {
-  return `<div class="detail-sec">
-    <div class="detail-sec-title">${title}</div>
-    ${body}
-  </div>`;
+function detailSec(title, body) {
+  return `<div class="detail-sec"><div class="detail-sec-title">${title}</div>${body}</div>`;
 }
-
 function drow(key, val) {
   if (val == null || val === '') return '';
   return `<div class="drow"><span class="dkey">${key}</span><span class="dval">${esc(String(val))}</span></div>`;
 }
-
-function emptyState(msg) {
-  return `<div class="empty"><div class="glyph">∅</div>${msg}</div>`;
-}
-function loadingDetail() {
-  return `<div class="detail-hdr"><div class="detail-name" style="color:var(--muted)">loading...</div></div>`;
-}
-function errDetail(msg) {
-  return `<div class="detail-hdr"><div class="detail-name" style="color:var(--red)">${esc(msg)}</div></div>`;
-}
-
-function fmtDate(iso) {
-  return iso ? new Date(iso).toLocaleDateString() : null;
-}
-
+function emptyState(msg)  { return `<div class="empty"><div class="glyph">∅</div>${msg}</div>`; }
+function loadingDetail()  { return `<div class="detail-hdr"><div class="detail-name" style="color:var(--muted)">loading...</div></div>`; }
+function errDetail(msg)   { return `<div class="detail-hdr"><div class="detail-name" style="color:var(--red)">${esc(msg)}</div></div>`; }
+function fmtDate(iso)     { return iso ? new Date(iso).toLocaleDateString() : null; }
 function esc(str) {
   if (str == null) return '';
-  return String(str)
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-// ── UI state ───────────────────────────────────────────────────────────────
-function setLoading(on) {
-  document.getElementById('loading').classList.toggle('visible', on);
-}
-function showError(msg) {
-  document.getElementById('error-strip').innerHTML =
-    `<div class="err-banner">error: ${esc(msg)}</div>`;
-}
-function clearError() {
-  document.getElementById('error-strip').innerHTML = '';
-}
+/* ── UI state ─────────────────────────────────────────────────────────────── */
+function setLoading(on)  { document.getElementById('loading').classList.toggle('visible', on); }
+function showError(msg)  { document.getElementById('error-strip').innerHTML = `<div class="err-banner">error: ${esc(msg)}</div>`; }
+function clearError()    { document.getElementById('error-strip').innerHTML = ''; }
 </script>
 </body>
 </html>

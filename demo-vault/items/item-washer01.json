@@ -1,0 +1,13 @@
+{
+  "id": "item-washer01",
+  "name": "Whirlpool HE Top Load Washer",
+  "category": "Appliances",
+  "roomId": "room-utility",
+  "brand": "Whirlpool",
+  "model": "WTW8127LW",
+  "warrantyExpiryDate": "2026-07-01",
+  "notes": "Warranty expires in ~30 days — consider extended warranty. Use HE detergent only. Run tub-clean cycle monthly.",
+  "hasSecrets": true,
+  "createdAt": "2025-07-01T12:00:00Z",
+  "updatedAt": "2026-05-15T09:00:00Z"
+}
