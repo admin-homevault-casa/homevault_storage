@@ -1,0 +1,25 @@
+{
+  "id": "2a771bc5-a42d-0956-b452-196de6093e10",
+  "title": "Test smoke \u0026 CO detectors",
+  "notes": "Press \u0026 hold for 5 sec. Replace any unit older than 10 years.",
+  "linkedItemId": null,
+  "checklistId": "e4e54613-4f6e-375e-ae71-166bb99a270f",
+  "schedule": {
+    "type": "recurring",
+    "intervalDays": 180,
+    "anchor": "lastCompleted"
+  },
+  "dueDate": "2026-07-16",
+  "completionHistory": [
+    {
+      "date": "2026-01-17",
+      "completedBy": "self"
+    },
+    {
+      "date": "2025-07-21",
+      "completedBy": "self"
+    }
+  ],
+  "createdAt": "2025-01-20T12:00:00+00:00",
+  "updatedAt": "2025-01-20T12:00:00+00:00"
+}

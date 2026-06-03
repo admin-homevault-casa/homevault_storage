@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Lock origins so any future regression in esc() can't load remote scripts. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
   <title>HomeVault Viewer</title>
   <meta name="description" content="Browse a HomeVault data store in any browser. No upload, no server. Everything stays local.">
   <style>
@@ -553,13 +556,16 @@ async function selectItem(id) {
     } else {
       const s = await V.read(`items/${id}.secret.json`);
       if (s) {
+        // Schema field names — STORAGE_SCHEMA.md §HouseholdItemSecrets.
+        const priceLabel = s.purchasePrice != null
+          ? `${currencyGlyph(s.purchaseCurrency)}${s.purchasePrice.toLocaleString()}`
+          : null;
         secretsHtml = detailSec('SENSITIVE DATA', [
-          drow('serial no.',  s.serialNumber),
-          drow('price',       s.purchasePrice != null ? `${s.currency ?? '$'}${s.purchasePrice.toLocaleString()}` : null),
-          drow('purchased',   s.purchaseDate),
-          drow('store',       s.store),
-          drow('claim ref',   s.warrantyClaimRef),
-          drow('notes',       s.notes),
+          drow('serial no.', s.serialNumber),
+          drow('price',      priceLabel),
+          drow('purchased',  s.purchaseDate),
+          drow('store',      s.purchaseStore),
+          drow('claim ref',  s.warrantyClaimRef),
         ].join(''));
       }
     }
@@ -608,7 +614,8 @@ async function selectTask(id) {
   const history = (task.completionHistory ?? []).slice(-5).reverse();
 
   const histHtml = history.length
-    ? history.map(c => drow(fmtDate(c.date), `<span style="color:var(--green)">✓ done</span>`)).join('')
+    // drow() escapes its value — use drowRaw() for pre-built chip markup.
+    ? history.map(c => drowRaw(fmtDate(c.date), `<span style="color:var(--green)">✓ done</span>`)).join('')
     : `<div style="color:var(--muted);font-size:11px">no completions recorded</div>`;
 
   panel.innerHTML = `
@@ -652,7 +659,8 @@ async function selectChecklist(id) {
     : `<div style="color:var(--muted);font-size:11px">no tasks</div>`;
 
   const histHtml = (cl.completionHistory ?? []).slice(-3).reverse()
-    .map(c => drow(fmtDate(c.date), `<span style="color:var(--green)">✓ ${c.trigger ?? 'done'}</span>`)).join('') ||
+    .map(c => drowRaw(fmtDate(c.date),
+      `<span style="color:var(--green)">✓ ${esc(c.trigger ?? 'done')}</span>`)).join('') ||
     `<div style="color:var(--muted);font-size:11px">no completions recorded</div>`;
 
   panel.innerHTML = `
@@ -700,24 +708,56 @@ async function selectRoom(id) {
     ${detailSec('ITEMS', itemsHtml)}`;
 }
 
-/* ── Domain logic ────────────────────────────────────────────────────────── */
+/* ── Domain logic ─────────────────────────────────────────────────────────
+   Thresholds + tiers mirror HomeVault.Core (WarrantyHelper + DueDateHelper).
+   Canonical contract: DISPLAY_CONVENTIONS.md.
+   ─────────────────────────────────────────────────────────────────────── */
+
+const WARRANTY_EXPIRING_SOON_DAYS = 60;
+
 function warrantyStatus(dateStr) {
   if (!dateStr) return { text: 'no warranty', color: 'var(--muted)', bg: 'transparent' };
-  const daysLeft = Math.floor((new Date(dateStr + 'T00:00:00') - Date.now()) / 86400000);
-  if (daysLeft < 0)   return { text: 'expired',           color: 'var(--red)',    bg: 'var(--red-bg)'    };
-  if (daysLeft <= 30) return { text: daysLeft + 'd left',  color: 'var(--amber)',  bg: 'var(--amber-bg)'  };
-  if (daysLeft <= 90) return { text: daysLeft + 'd left',  color: 'var(--accent)', bg: 'var(--accent-bg)' };
-  return { text: Math.floor(daysLeft / 30) + 'mo left',   color: 'var(--green)',  bg: 'var(--green-bg)'  };
+  const daysLeft = daysFromToday(dateStr);
+  if (daysLeft < 0)
+    return { text: 'expired', color: 'var(--red)', bg: 'var(--red-bg)' };
+  if (daysLeft <= WARRANTY_EXPIRING_SOON_DAYS)
+    return { text: daysLeft + 'd left', color: 'var(--amber)', bg: 'var(--amber-bg)' };
+  return {
+    text:  daysLeft >= 60 ? Math.floor(daysLeft / 30) + 'mo left' : daysLeft + 'd left',
+    color: 'var(--green)',
+    bg:    'var(--green-bg)'
+  };
 }
+
+const DUE_WARNING_DAYS  = 7;
+const DUE_UPCOMING_DAYS = 30;
 
 function dueDisplay(dateStr) {
   if (!dateStr) return { text: 'no due date', color: 'var(--muted)' };
-  const days = Math.floor((new Date(dateStr + 'T00:00:00') - Date.now()) / 86400000);
-  if (days < -1)  return { text: Math.abs(days) + 'd overdue', color: 'var(--red)'    };
-  if (days <= 0)  return { text: 'due today',                  color: 'var(--amber)'  };
-  if (days <= 7)  return { text: 'in ' + days + 'd',           color: 'var(--amber)'  };
-  if (days <= 30) return { text: 'in ' + days + 'd',           color: 'var(--accent)' };
-  return { text: 'in ' + Math.floor(days / 30) + 'mo',        color: 'var(--green)'  };
+  const days = daysFromToday(dateStr);
+  if (days <  0)                  return { text: Math.abs(days) + 'd overdue', color: 'var(--red)'    };
+  if (days === 0)                 return { text: 'due today',                  color: 'var(--amber)'  };
+  if (days <= DUE_WARNING_DAYS)   return { text: 'in ' + days + 'd',           color: 'var(--amber)'  };
+  if (days <= DUE_UPCOMING_DAYS)  return { text: 'in ' + days + 'd',           color: 'var(--accent)' };
+  return { text: 'in ' + Math.floor(days / 30) + 'mo', color: 'var(--green)' };
+}
+
+function daysFromToday(dateStr) {
+  const target = new Date(dateStr.length === 10 ? dateStr + 'T00:00:00' : dateStr);
+  const now    = new Date();
+  const targetUtc = Date.UTC(target.getFullYear(), target.getMonth(), target.getDate());
+  const nowUtc    = Date.UTC(now.getFullYear(),    now.getMonth(),    now.getDate());
+  return Math.round((targetUtc - nowUtc) / 86400000);
+}
+
+function currencyGlyph(code) {
+  switch ((code || '').toUpperCase()) {
+    case 'USD': case 'CAD': case 'AUD': return '$';
+    case 'EUR': return '€';
+    case 'GBP': return '£';
+    case 'JPY': return '¥';
+    default:    return code ? code + ' ' : '$';
+  }
 }
 
 function roomName(id)      { return id ? (V.index.rooms      ?? []).find(r => r.id === id)?.name ?? null : null; }
@@ -736,6 +776,12 @@ function detailSec(title, body) {
 function drow(key, val) {
   if (val == null || val === '') return '';
   return `<div class="drow"><span class="dkey">${key}</span><span class="dval">${esc(String(val))}</span></div>`;
+}
+// Pre-built HTML variant — use only for value markup the viewer itself
+// authored. Do NOT pass user-supplied strings through this.
+function drowRaw(key, htmlVal) {
+  if (htmlVal == null || htmlVal === '') return '';
+  return `<div class="drow"><span class="dkey">${key}</span><span class="dval">${htmlVal}</span></div>`;
 }
 function emptyState(msg)  { return `<div class="empty"><div class="glyph">∅</div>${msg}</div>`; }
 function loadingDetail()  { return `<div class="detail-hdr"><div class="detail-name" style="color:var(--muted)">loading...</div></div>`; }

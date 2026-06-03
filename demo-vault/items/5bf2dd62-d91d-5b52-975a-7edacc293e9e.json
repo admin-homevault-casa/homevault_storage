@@ -1,0 +1,14 @@
+{
+  "id": "5bf2dd62-d91d-5b52-975a-7edacc293e9e",
+  "name": "Honda Civic 2022",
+  "category": "Automotive",
+  "roomId": "9c8e18ac-55d4-645b-8a3b-d8e9e575510c",
+  "brand": "Honda",
+  "model": "Civic Sport",
+  "primaryPhotoId": null,
+  "warrantyExpiryDate": "2027-03-15",
+  "notes": null,
+  "hasSecrets": false,
+  "createdAt": "2025-01-20T12:00:00+00:00",
+  "updatedAt": "2025-01-20T12:00:00+00:00"
+}

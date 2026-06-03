@@ -1,0 +1,29 @@
+{
+  "id": "78ecc2d2-43fa-805d-a03c-a2e112a95eb8",
+  "title": "Change HVAC filter",
+  "notes": "Use MERV 11. Lennox spec: every 90 days. Mark date on filter edge.",
+  "linkedItemId": "2d2c2f5e-f4cd-8653-b22f-6be23a91525b",
+  "checklistId": "e4e54613-4f6e-375e-ae71-166bb99a270f",
+  "schedule": {
+    "type": "recurring",
+    "intervalDays": 90,
+    "anchor": "lastCompleted"
+  },
+  "dueDate": "2026-06-13",
+  "completionHistory": [
+    {
+      "date": "2026-03-15",
+      "completedBy": "self"
+    },
+    {
+      "date": "2025-12-15",
+      "completedBy": "self"
+    },
+    {
+      "date": "2025-09-16",
+      "completedBy": "self"
+    }
+  ],
+  "createdAt": "2025-01-20T12:00:00+00:00",
+  "updatedAt": "2025-01-20T12:00:00+00:00"
+}

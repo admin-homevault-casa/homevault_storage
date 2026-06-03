@@ -1,0 +1,14 @@
+{
+  "id": "2d2c2f5e-f4cd-8653-b22f-6be23a91525b",
+  "name": "Lennox XC21 HVAC System",
+  "category": "HVAC",
+  "roomId": "9c8e18ac-55d4-645b-8a3b-d8e9e575510c",
+  "brand": "Lennox",
+  "model": "XC21-036",
+  "primaryPhotoId": null,
+  "warrantyExpiryDate": "2025-01-15",
+  "notes": null,
+  "hasSecrets": false,
+  "createdAt": "2025-01-20T12:00:00+00:00",
+  "updatedAt": "2025-01-20T12:00:00+00:00"
+}

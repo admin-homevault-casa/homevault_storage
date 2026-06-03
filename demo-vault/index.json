@@ -1,159 +1,169 @@
 {
   "items": [
     {
-      "id": "item-tv01",
-      "name": "Samsung 65\" QLED TV",
+      "id": "f7ac8d89-b4d0-bf5a-b3af-f78397cdcac8",
+      "name": "Samsung 65\u0022 QLED TV",
       "category": "Electronics",
-      "roomId": "room-living",
+      "roomId": "be65f8ac-c81d-c75b-ba42-b16c493a4f95",
       "brand": "Samsung",
       "model": "QN65S90C",
+      "primaryPhotoId": null,
       "warrantyExpiryDate": "2027-02-01",
       "hasSecrets": true
     },
     {
-      "id": "item-fridge01",
+      "id": "3a0656a1-fe87-945a-8d06-baebbf087b94",
       "name": "LG French Door Refrigerator",
       "category": "Appliances",
-      "roomId": "room-kitchen",
+      "roomId": "f7230e53-ec1a-c95d-a885-7497a8d3d1c0",
       "brand": "LG",
       "model": "LRMVS3006S",
+      "primaryPhotoId": null,
       "warrantyExpiryDate": "2024-03-15",
       "hasSecrets": true
     },
     {
-      "id": "item-dish01",
+      "id": "a482062f-fcbf-d65d-9639-6e96a4880fcf",
       "name": "Bosch 800 Series Dishwasher",
       "category": "Appliances",
-      "roomId": "room-kitchen",
+      "roomId": "f7230e53-ec1a-c95d-a885-7497a8d3d1c0",
       "brand": "Bosch",
       "model": "SHPM88Z75N",
+      "primaryPhotoId": null,
       "warrantyExpiryDate": "2027-08-01",
       "hasSecrets": true
     },
     {
-      "id": "item-dyson01",
+      "id": "9b09f870-a9b1-da58-9c79-b6bd1c2ebfd0",
       "name": "Dyson V15 Detect",
       "category": "Appliances",
-      "roomId": "room-utility",
+      "roomId": "dae6de93-5b9e-fd57-88ed-8b32355190ff",
       "brand": "Dyson",
       "model": "V15 Detect",
+      "primaryPhotoId": null,
       "warrantyExpiryDate": "2026-12-01",
       "hasSecrets": true
     },
     {
-      "id": "item-hvac01",
+      "id": "2d2c2f5e-f4cd-8653-b22f-6be23a91525b",
       "name": "Lennox XC21 HVAC System",
       "category": "HVAC",
-      "roomId": "room-garage",
+      "roomId": "9c8e18ac-55d4-645b-8a3b-d8e9e575510c",
       "brand": "Lennox",
       "model": "XC21-036",
+      "primaryPhotoId": null,
       "warrantyExpiryDate": "2025-01-15",
       "hasSecrets": false
     },
     {
-      "id": "item-heater01",
+      "id": "2e626924-9455-d658-8104-bf7aec8073a7",
       "name": "Rheem Performance Water Heater",
       "category": "Plumbing",
-      "roomId": "room-utility",
+      "roomId": "dae6de93-5b9e-fd57-88ed-8b32355190ff",
       "brand": "Rheem",
       "model": "XE50T12EK55U1",
+      "primaryPhotoId": null,
       "warrantyExpiryDate": "2029-06-01",
       "hasSecrets": true
     },
     {
-      "id": "item-mac01",
-      "name": "MacBook Pro 14\"",
+      "id": "8347e746-7ae7-b150-a839-49b72c22858b",
+      "name": "MacBook Pro 14\u0022",
       "category": "Electronics",
-      "roomId": "room-bedroom",
+      "roomId": "0d1ddabe-9b23-0650-ab3c-3acf716e4866",
       "brand": "Apple",
       "model": "MBP14 M3 Pro",
+      "primaryPhotoId": null,
       "warrantyExpiryDate": "2027-05-01",
       "hasSecrets": true
     },
     {
-      "id": "item-washer01",
+      "id": "f85e26ec-5494-4853-bf82-81fc991859ea",
       "name": "Whirlpool HE Top Load Washer",
       "category": "Appliances",
-      "roomId": "room-utility",
+      "roomId": "dae6de93-5b9e-fd57-88ed-8b32355190ff",
       "brand": "Whirlpool",
       "model": "WTW8127LW",
+      "primaryPhotoId": null,
       "warrantyExpiryDate": "2026-07-01",
       "hasSecrets": true
     },
     {
-      "id": "item-nest01",
+      "id": "9877f035-852d-c850-993a-2310e64b82f4",
       "name": "Nest Learning Thermostat",
       "category": "Smart Home",
-      "roomId": "room-living",
+      "roomId": "be65f8ac-c81d-c75b-ba42-b16c493a4f95",
       "brand": "Google",
       "model": "3rd Gen",
+      "primaryPhotoId": null,
       "warrantyExpiryDate": null,
       "hasSecrets": false
     },
     {
-      "id": "item-car01",
+      "id": "5bf2dd62-d91d-5b52-975a-7edacc293e9e",
       "name": "Honda Civic 2022",
       "category": "Automotive",
-      "roomId": "room-garage",
+      "roomId": "9c8e18ac-55d4-645b-8a3b-d8e9e575510c",
       "brand": "Honda",
       "model": "Civic Sport",
+      "primaryPhotoId": null,
       "warrantyExpiryDate": "2027-03-15",
       "hasSecrets": false
     }
   ],
   "tasks": [
     {
-      "id": "task-hvac-filter",
+      "id": "78ecc2d2-43fa-805d-a03c-a2e112a95eb8",
       "title": "Change HVAC filter",
-      "linkedItemId": "item-hvac01",
-      "checklistId": "list-fall",
+      "linkedItemId": "2d2c2f5e-f4cd-8653-b22f-6be23a91525b",
+      "checklistId": "e4e54613-4f6e-375e-ae71-166bb99a270f",
       "dueDate": "2026-06-13",
       "scheduleType": "recurring"
     },
     {
-      "id": "task-smoke",
-      "title": "Test smoke & CO detectors",
+      "id": "2a771bc5-a42d-0956-b452-196de6093e10",
+      "title": "Test smoke \u0026 CO detectors",
       "linkedItemId": null,
-      "checklistId": "list-fall",
+      "checklistId": "e4e54613-4f6e-375e-ae71-166bb99a270f",
       "dueDate": "2026-07-16",
       "scheduleType": "recurring"
     },
     {
-      "id": "task-fridge-coils",
+      "id": "9f3aa777-7d45-ac5c-8b78-119829a54994",
       "title": "Clean refrigerator coils",
-      "linkedItemId": "item-fridge01",
+      "linkedItemId": "3a0656a1-fe87-945a-8d06-baebbf087b94",
       "checklistId": null,
       "dueDate": "2026-09-01",
       "scheduleType": "recurring"
     },
     {
-      "id": "task-dish-descale",
+      "id": "2594222f-b8c7-965c-8efc-6e89ffd33f5d",
       "title": "Descale dishwasher",
-      "linkedItemId": "item-dish01",
-      "checklistId": "list-monthly",
+      "linkedItemId": "a482062f-fcbf-d65d-9639-6e96a4880fcf",
+      "checklistId": "df672baa-a142-4657-b7d5-969e99a74da9",
       "dueDate": "2026-05-27",
       "scheduleType": "recurring"
     },
     {
-      "id": "task-dyson-filter",
+      "id": "52ad7aba-4754-a25a-9e0f-8b5b42777f22",
       "title": "Clean Dyson filter",
-      "linkedItemId": "item-dyson01",
-      "checklistId": "list-monthly",
-      "dueDate": "2026-06-01",
+      "linkedItemId": "9b09f870-a9b1-da58-9c79-b6bd1c2ebfd0",
+      "checklistId": "df672baa-a142-4657-b7d5-969e99a74da9",
+      "dueDate": "2026-06-02",
       "scheduleType": "recurring"
     },
     {
-      "id": "task-heater-flush",
+      "id": "a7305845-8a46-0358-b2df-679c960ae917",
       "title": "Flush water heater",
-      "linkedItemId": "item-heater01",
-      "checklistId": "list-fall",
+      "linkedItemId": "2e626924-9455-d658-8104-bf7aec8073a7",
+      "checklistId": "e4e54613-4f6e-375e-ae71-166bb99a270f",
       "dueDate": "2027-02-01",
       "scheduleType": "recurring"
     },
     {
-      "id": "task-oil-change",
+      "id": "c8a18f55-2168-ab58-83bd-0060204ac13d",
       "title": "Car oil change",
-      "linkedItemId": "item-car01",
+      "linkedItemId": "5bf2dd62-d91d-5b52-975a-7edacc293e9e",
       "checklistId": null,
       "dueDate": "2026-06-23",
       "scheduleType": "recurring"
@@ -161,24 +171,44 @@
   ],
   "checklists": [
     {
-      "id": "list-fall",
+      "id": "e4e54613-4f6e-375e-ae71-166bb99a270f",
       "name": "Fall Home Maintenance",
       "dueDate": "2026-10-01",
       "taskCount": 3
     },
     {
-      "id": "list-monthly",
+      "id": "df672baa-a142-4657-b7d5-969e99a74da9",
       "name": "Monthly Appliance Check",
       "dueDate": "2026-06-08",
       "taskCount": 2
     }
   ],
   "rooms": [
-    { "id": "room-kitchen",  "name": "Kitchen",        "itemCount": 2 },
-    { "id": "room-living",   "name": "Living Room",    "itemCount": 2 },
-    { "id": "room-bedroom",  "name": "Master Bedroom", "itemCount": 1 },
-    { "id": "room-garage",   "name": "Garage",         "itemCount": 2 },
-    { "id": "room-utility",  "name": "Utility Room",   "itemCount": 3 }
+    {
+      "id": "f7230e53-ec1a-c95d-a885-7497a8d3d1c0",
+      "name": "Kitchen",
+      "itemCount": 2
+    },
+    {
+      "id": "be65f8ac-c81d-c75b-ba42-b16c493a4f95",
+      "name": "Living Room",
+      "itemCount": 2
+    },
+    {
+      "id": "0d1ddabe-9b23-0650-ab3c-3acf716e4866",
+      "name": "Master Bedroom",
+      "itemCount": 1
+    },
+    {
+      "id": "9c8e18ac-55d4-645b-8a3b-d8e9e575510c",
+      "name": "Garage",
+      "itemCount": 2
+    },
+    {
+      "id": "dae6de93-5b9e-fd57-88ed-8b32355190ff",
+      "name": "Utility Room",
+      "itemCount": 3
+    }
   ],
-  "lastUpdated": "2026-06-01T09:15:00Z"
+  "lastUpdated": "2026-06-01T09:15:00+00:00"
 }

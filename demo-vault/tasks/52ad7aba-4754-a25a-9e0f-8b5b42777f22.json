@@ -1,0 +1,25 @@
+{
+  "id": "52ad7aba-4754-a25a-9e0f-8b5b42777f22",
+  "title": "Clean Dyson filter",
+  "notes": "Rinse under cold water, air-dry 24h before reinstalling.",
+  "linkedItemId": "9b09f870-a9b1-da58-9c79-b6bd1c2ebfd0",
+  "checklistId": "df672baa-a142-4657-b7d5-969e99a74da9",
+  "schedule": {
+    "type": "recurring",
+    "intervalDays": 30,
+    "anchor": "lastCompleted"
+  },
+  "dueDate": "2026-06-02",
+  "completionHistory": [
+    {
+      "date": "2026-05-03",
+      "completedBy": "self"
+    },
+    {
+      "date": "2026-04-03",
+      "completedBy": "self"
+    }
+  ],
+  "createdAt": "2025-01-20T12:00:00+00:00",
+  "updatedAt": "2025-01-20T12:00:00+00:00"
+}

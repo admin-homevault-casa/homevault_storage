@@ -1,0 +1,25 @@
+{
+  "id": "2594222f-b8c7-965c-8efc-6e89ffd33f5d",
+  "title": "Descale dishwasher",
+  "notes": "Run empty cycle with citric-acid descaler. Wipe gasket after.",
+  "linkedItemId": "a482062f-fcbf-d65d-9639-6e96a4880fcf",
+  "checklistId": "df672baa-a142-4657-b7d5-969e99a74da9",
+  "schedule": {
+    "type": "recurring",
+    "intervalDays": 90,
+    "anchor": "lastCompleted"
+  },
+  "dueDate": "2026-05-27",
+  "completionHistory": [
+    {
+      "date": "2026-02-26",
+      "completedBy": "self"
+    },
+    {
+      "date": "2025-11-28",
+      "completedBy": "self"
+    }
+  ],
+  "createdAt": "2025-01-20T12:00:00+00:00",
+  "updatedAt": "2025-01-20T12:00:00+00:00"
+}

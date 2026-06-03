@@ -1,0 +1,14 @@
+{
+  "id": "8347e746-7ae7-b150-a839-49b72c22858b",
+  "name": "MacBook Pro 14\u0022",
+  "category": "Electronics",
+  "roomId": "0d1ddabe-9b23-0650-ab3c-3acf716e4866",
+  "brand": "Apple",
+  "model": "MBP14 M3 Pro",
+  "primaryPhotoId": null,
+  "warrantyExpiryDate": "2027-05-01",
+  "notes": null,
+  "hasSecrets": true,
+  "createdAt": "2025-01-20T12:00:00+00:00",
+  "updatedAt": "2025-01-20T12:00:00+00:00"
+}

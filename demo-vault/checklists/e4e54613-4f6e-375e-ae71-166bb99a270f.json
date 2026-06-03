@@ -1,0 +1,25 @@
+{
+  "id": "e4e54613-4f6e-375e-ae71-166bb99a270f",
+  "name": "Fall Home Maintenance",
+  "description": "Annual pre-winter checklist. Run before temperatures drop below 50\u00B0F.",
+  "taskIds": [
+    "78ecc2d2-43fa-805d-a03c-a2e112a95eb8",
+    "2a771bc5-a42d-0956-b452-196de6093e10",
+    "a7305845-8a46-0358-b2df-679c960ae917"
+  ],
+  "schedule": {
+    "type": "recurring",
+    "intervalDays": 365,
+    "anchor": "lastCompleted"
+  },
+  "dueDate": "2026-10-01",
+  "completionHistory": [
+    {
+      "date": "2025-10-05",
+      "completedBy": "self",
+      "trigger": "allTasksChecked"
+    }
+  ],
+  "createdAt": "2025-01-20T12:00:00+00:00",
+  "updatedAt": "2025-01-20T12:00:00+00:00"
+}

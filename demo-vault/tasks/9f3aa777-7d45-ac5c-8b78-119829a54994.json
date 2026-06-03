@@ -1,0 +1,21 @@
+{
+  "id": "9f3aa777-7d45-ac5c-8b78-119829a54994",
+  "title": "Clean refrigerator coils",
+  "notes": "Pull fridge forward, vacuum condenser coils underneath. Improves efficiency.",
+  "linkedItemId": "3a0656a1-fe87-945a-8d06-baebbf087b94",
+  "checklistId": null,
+  "schedule": {
+    "type": "recurring",
+    "intervalDays": 365,
+    "anchor": "lastCompleted"
+  },
+  "dueDate": "2026-09-01",
+  "completionHistory": [
+    {
+      "date": "2025-09-01",
+      "completedBy": "self"
+    }
+  ],
+  "createdAt": "2025-01-20T12:00:00+00:00",
+  "updatedAt": "2025-01-20T12:00:00+00:00"
+}

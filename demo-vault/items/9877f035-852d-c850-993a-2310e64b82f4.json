@@ -1,0 +1,14 @@
+{
+  "id": "9877f035-852d-c850-993a-2310e64b82f4",
+  "name": "Nest Learning Thermostat",
+  "category": "Smart Home",
+  "roomId": "be65f8ac-c81d-c75b-ba42-b16c493a4f95",
+  "brand": "Google",
+  "model": "3rd Gen",
+  "primaryPhotoId": null,
+  "warrantyExpiryDate": null,
+  "notes": null,
+  "hasSecrets": false,
+  "createdAt": "2025-01-20T12:00:00+00:00",
+  "updatedAt": "2025-01-20T12:00:00+00:00"
+}

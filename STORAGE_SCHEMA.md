@@ -409,11 +409,18 @@ On either trigger: `dueDate` advances, a `ChecklistCompletionEntry` is appended,
 
 ### attachments/
 
-Raw attachment files. Filename is `{uuid}.{ext}` where the UUID matches `Attachment.id` in the containing item's secrets.
+Raw or encrypted attachment files.
 
-Common extensions: `.pdf` (receipts, manuals), `.jpg` / `.png` (photos).
+| Encryption | Filename                    | Contents                          |
+|---|---|---|
+| Disabled   | `attachments/{uuid}.{ext}`  | Raw bytes (e.g. PDF, JPEG, PNG)   |
+| Enabled    | `attachments/{uuid}.{ext}.enc` | `EncryptedBlob` JSON wrapping the raw bytes — same envelope format as `*.secret.json` |
 
-Attachments are not currently encrypted separately. Their metadata (type, filename, date) lives in `items/{id}.secret.json` and is encrypted with it when encryption is enabled.
+The `.enc` suffix is the on-disk signal that a file is encrypted; third-party tools may detect it without sniffing content. `Attachment.filename` in the containing item's secrets records the exact on-disk filename including the suffix when applicable.
+
+Common base extensions: `.pdf` (receipts, manuals), `.jpg` / `.png` (photos), `.heic` / `.heif` (iOS photos).
+
+When the vault is encrypted but the session key has not been supplied, a viewer must refuse to render the attachment (treat as locked) rather than presenting the raw `EncryptedBlob` JSON.
 
 ---
 
@@ -554,7 +561,7 @@ The encryption key is derived from the user's passphrase using **PBKDF2-SHA256**
 | Salt | 32 random bytes, stored as Base64 in `vault.meta.json` → `kdfSalt` |
 | Iterations | Value from `vault.meta.json` → `kdfIterations` (minimum 200,000) |
 
-The passphrase is never written to disk. The derived key is held in memory only for the duration of the session.
+The passphrase is never written to disk. The derived 256-bit key is stored in the OS secure-storage facility (iOS Keychain / Android Keystore / Windows Credential Manager) so the vault can unlock without re-prompting after the app restarts. The passphrase itself remains in memory only for the duration of the derivation call. Vaults whose `kdfIterations` is read as less than 200,000 must be clamped up to 200,000 before use — a corrupted or malicious `vault.meta.json` cannot weaken the KDF below this floor.
 
 ---
 
@@ -605,7 +612,7 @@ What caused a checklist to be marked complete.
 
 `vault.meta.json` contains a `schemaVersion` integer starting at **1**.
 
-A higher version number indicates a breaking change to the data model. Any tool that reads a vault with an unrecognised schema version **must refuse to write** to that vault and **should display a warning** to the user recommending they upgrade the tool first.
+A higher version number indicates a breaking change to the data model. Any tool that reads a vault with an unrecognised schema version **must refuse to read or write** that vault and **should display a warning** to the user recommending they upgrade the tool first. The MAUI app implements this as `UnsupportedSchemaVersionException` thrown from `VaultService.LoadMetaAsync`; the standalone viewer surfaces a banner and blocks any future write paths.
 
 Additive changes (new optional fields) do not increment the schema version. Implementations must silently ignore unknown fields during deserialisation (`PropertyNameCaseInsensitive` / `additionalProperties`-permissive behaviour).
 
