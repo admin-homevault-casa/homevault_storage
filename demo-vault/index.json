@@ -2,8 +2,8 @@
   "items": [
     {
       "id": "f7ac8d89-b4d0-bf5a-b3af-f78397cdcac8",
-      "name": "Samsung 65\u0022 QLED TV",
-      "category": "Electronics",
+      "name": "Samsung 65\" QLED TV",
+      "category": "electronics",
       "roomId": "be65f8ac-c81d-c75b-ba42-b16c493a4f95",
       "brand": "Samsung",
       "model": "QN65S90C",
@@ -14,7 +14,7 @@
     {
       "id": "3a0656a1-fe87-945a-8d06-baebbf087b94",
       "name": "LG French Door Refrigerator",
-      "category": "Appliances",
+      "category": "appliances_large",
       "roomId": "f7230e53-ec1a-c95d-a885-7497a8d3d1c0",
       "brand": "LG",
       "model": "LRMVS3006S",
@@ -25,7 +25,7 @@
     {
       "id": "a482062f-fcbf-d65d-9639-6e96a4880fcf",
       "name": "Bosch 800 Series Dishwasher",
-      "category": "Appliances",
+      "category": "appliances_large",
       "roomId": "f7230e53-ec1a-c95d-a885-7497a8d3d1c0",
       "brand": "Bosch",
       "model": "SHPM88Z75N",
@@ -36,7 +36,7 @@
     {
       "id": "9b09f870-a9b1-da58-9c79-b6bd1c2ebfd0",
       "name": "Dyson V15 Detect",
-      "category": "Appliances",
+      "category": "appliances_large",
       "roomId": "dae6de93-5b9e-fd57-88ed-8b32355190ff",
       "brand": "Dyson",
       "model": "V15 Detect",
@@ -68,8 +68,8 @@
     },
     {
       "id": "8347e746-7ae7-b150-a839-49b72c22858b",
-      "name": "MacBook Pro 14\u0022",
-      "category": "Electronics",
+      "name": "MacBook Pro 14\"",
+      "category": "electronics",
       "roomId": "0d1ddabe-9b23-0650-ab3c-3acf716e4866",
       "brand": "Apple",
       "model": "MBP14 M3 Pro",
@@ -80,7 +80,7 @@
     {
       "id": "f85e26ec-5494-4853-bf82-81fc991859ea",
       "name": "Whirlpool HE Top Load Washer",
-      "category": "Appliances",
+      "category": "appliances_large",
       "roomId": "dae6de93-5b9e-fd57-88ed-8b32355190ff",
       "brand": "Whirlpool",
       "model": "WTW8127LW",
@@ -122,7 +122,7 @@
     },
     {
       "id": "2a771bc5-a42d-0956-b452-196de6093e10",
-      "title": "Test smoke \u0026 CO detectors",
+      "title": "Test smoke & CO detectors",
       "linkedItemId": null,
       "checklistId": "e4e54613-4f6e-375e-ae71-166bb99a270f",
       "dueDate": "2026-07-16",
@@ -186,22 +186,22 @@
   "rooms": [
     {
       "id": "f7230e53-ec1a-c95d-a885-7497a8d3d1c0",
-      "name": "Kitchen",
+      "name": "kitchen",
       "itemCount": 2
     },
     {
       "id": "be65f8ac-c81d-c75b-ba42-b16c493a4f95",
-      "name": "Living Room",
+      "name": "living_room",
       "itemCount": 2
     },
     {
       "id": "0d1ddabe-9b23-0650-ab3c-3acf716e4866",
-      "name": "Master Bedroom",
+      "name": "master_bedroom",
       "itemCount": 1
     },
     {
       "id": "9c8e18ac-55d4-645b-8a3b-d8e9e575510c",
-      "name": "Garage",
+      "name": "garage",
       "itemCount": 2
     },
     {

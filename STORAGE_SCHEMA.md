@@ -61,8 +61,16 @@ The top-level index file (`index.json`) contains lightweight summaries of every 
 │   └── <uuid>.json          # Maintenance task with schedule and completion history
 ├── checklists/
 │   └── <uuid>.json          # Named group of tasks with its own schedule
-└── attachments/
-    └── <uuid>.<ext>         # Raw attachment files (receipts, manuals, photos)
+├── attachments/
+│   └── <uuid>.<ext>         # Raw attachment files (receipts, manuals, photos)
+└── trash/                   # Deleted records, awaiting purge or restore
+    ├── manifest.json        # What was deleted, when, by whom, and from where
+    ├── items/<uuid>.json
+    ├── items/<uuid>.secret.json
+    ├── rooms/<uuid>.json
+    ├── tasks/<uuid>.json
+    ├── checklists/<uuid>.json
+    └── attachments/<uuid>.<ext>
 ```
 
 All IDs are lowercase UUIDs (`xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`).
@@ -113,17 +121,18 @@ Always present. Always plaintext. Contains lightweight summaries of every record
 ```json
 {
   "rooms": [
-    { "id": "uuid", "name": "Kitchen", "itemCount": 3 }
+    { "id": "uuid", "name": "kitchen", "itemCount": 3 }
   ],
   "items": [
     {
       "id": "uuid",
       "name": "Dishwasher",
-      "category": "Appliances",
+      "category": "appliances_large",
       "roomId": "uuid",
       "brand": "Bosch",
       "model": "SHPM88Z75N",
       "primaryPhotoId": "uuid",
+      "primaryPhotoFilename": "uuid.jpg.enc",
       "warrantyExpiryDate": "2027-06-15",
       "hasSecrets": true
     }
@@ -164,11 +173,12 @@ Always present. Always plaintext. Contains lightweight summaries of every record
 |---|---|---|
 | `id` | `string` | UUID |
 | `name` | `string` | Display name |
-| `category` | `string` | Free-form category label |
+| `category` | `string` | Catalog key or free text — see [Catalog values](#catalog-values--rooms-and-categories) |
 | `roomId` | `string \| null` | UUID of the containing room |
 | `brand` | `string \| null` | Manufacturer name |
 | `model` | `string \| null` | Model name or number |
 | `primaryPhotoId` | `string \| null` | UUID of the primary photo attachment |
+| `primaryPhotoFilename` | `string \| null` | On-disk filename of that attachment, e.g. `"a3f1….jpg.enc"`. Denormalised out of the sensitive tier so a list built from the plaintext index can show a thumbnail without opening a sidecar per row. Maintained by `VaultService` on save and backfilled by Rebuild Index — nothing else should write it. |
 | `warrantyExpiryDate` | `string \| null` | `YYYY-MM-DD`. `null` = no warranty recorded |
 | `hasSecrets` | `boolean` | Whether a `*.secret.json` sidecar exists |
 
@@ -180,7 +190,7 @@ Always present. Always plaintext. Contains lightweight summaries of every record
 | `title` | `string` | Display title |
 | `linkedItemId` | `string \| null` | UUID of the linked item |
 | `checklistId` | `string \| null` | UUID of the parent checklist |
-| `dueDate` | `string \| null` | `YYYY-MM-DD`. `null` = no due date or already completed (one-off) |
+| `dueDate` | `string \| null` | `YYYY-MM-DD`. **`null` means exactly one thing: a completed one-off.** An outstanding task always has a date — see the invariant below. |
 | `scheduleType` | `"oneOff" \| "recurring"` | See [Enums](#enums) |
 
 **ChecklistSummary fields:**
@@ -194,12 +204,156 @@ Always present. Always plaintext. Contains lightweight summaries of every record
 
 ---
 
+## trash/
+
+Deleting a record moves it here instead of destroying it (spec 17). Records keep
+their original folder structure and filenames underneath `trash/`, so the folder
+they are in is the only thing that changed and a third-party tool can still read
+them.
+
+Deleting an item takes its `.secret.json` sidecar and its attachments with it.
+
+**A trashed record is absent from `index.json`.** That is what makes the trash
+invisible to everything that is not looking for it: every list, count and
+reminder reads the index, so they all behave exactly as they would if the record
+had been destroyed.
+
+**No `schemaVersion` bump.** An older build ignores a folder it does not know
+about, and the record is already gone from the index, so it sees precisely what
+it should. Restoring later is an ordinary write it will pick up.
+
+### trash/manifest.json
+
+The files under `trash/` do not record where they came from, and reading them to
+build a list would mean decrypting every sidecar. The manifest holds both.
+
+```json
+{
+  "entries": [
+    {
+      "id": "uuid",
+      "type": "Item",
+      "originalPaths": [
+        "items/uuid.json",
+        "items/uuid.secret.json",
+        "attachments/uuid.jpg"
+      ],
+      "deletedAt": "2026-08-21T14:02:00Z",
+      "displayName": "Dishwasher",
+      "deletedBy": "Me",
+      "attachmentsUnresolved": false
+    }
+  ]
+}
+```
+
+| Field | Type | Description |
+|---|---|---|
+| `id` | `string` | The record's own UUID |
+| `type` | `"Item" \| "Room" \| "Task" \| "Checklist"` | What kind of record |
+| `originalPaths` | `string[]` | Every file that moved, as its path *before* deletion. Restore puts each one back exactly here. |
+| `deletedAt` | `string` | ISO 8601 UTC |
+| `displayName` | `string` | What to show in the trash list, so it renders without opening — or decrypting — each record. For a room this is the stored value, which may be a catalog key. |
+| `deletedBy` | `string` | Who deleted it. The trash is shared, so one household member can restore what another deleted. |
+| `attachmentsUnresolved` | `boolean` | True when an item's attachments could not be identified at delete time — see below |
+
+### Retention
+
+Entries older than the retention window are purged when the app comes to the
+foreground. The default is 30 days; "keep until I delete it" is available. The
+setting is per-device (it lives in preferences, not in the vault), because it is
+a preference about behaviour rather than a fact about the records.
+
+### Attachments and locked vaults
+
+Attachment filenames are random UUIDs. The only thing linking one to an item is
+the item's secrets sidecar — which cannot be read while the vault is locked.
+
+Deleting an item from a locked vault therefore moves the record and the sidecar,
+leaves the attachments in `attachments/`, and sets `attachmentsUnresolved`.
+Restore is unaffected: the files never moved, so the item comes back whole. What
+it costs is purging — permanently deleting that entry can only find the
+attachments if the vault has been unlocked by then. If it has not, they are left
+in place. An orphaned attachment is wasteful, not dangerous, and the alternative
+is refusing to empty the trash until someone remembers a passphrase.
+
+---
+
+## Catalog values — rooms and categories
+
+`Room.name` and `HouseholdItem.category` hold one of two things, and a reader
+must handle both:
+
+| What the user did | What is stored | Example |
+|---|---|---|
+| Picked from a HomeVault list | a stable lowercase key | `kitchen`, `appliances_large` |
+| Typed their own | exactly what they typed | `Utility Room`, `Smart Home` |
+
+**Reading:** look the value up in the table below. If it is not there, display it
+as-is. That single fallback covers user-typed values, keys added by a newer
+build, and any vault written before this scheme existed — no special cases and
+no version check.
+
+**Writing:** if what the user entered matches one of these labels, store the key.
+Otherwise store their text verbatim.
+
+The point of the keys is that the vault does not change meaning when the reader
+changes language. A Spanish user's vault holds `kitchen`, not `Cocina`, so an
+English reader — or a script, or a different app — sees the same value the
+Spanish user does.
+
+Rooms and categories are separate namespaces because they are separate fields;
+both legitimately contain `other`.
+
+### Room keys
+
+| Key | English label |
+|---|---|
+| `kitchen` | Kitchen |
+| `living_room` | Living Room |
+| `master_bedroom` | Master Bedroom |
+| `bedroom` | Bedroom |
+| `bathroom` | Bathroom |
+| `garage` | Garage |
+| `basement` | Basement |
+| `attic` | Attic |
+| `laundry` | Laundry |
+| `office` | Office |
+| `outdoor` | Outdoor |
+| `other` | Other |
+
+### Category keys
+
+| Key | English label |
+|---|---|
+| `appliances_large` | Appliances (large) |
+| `appliances_small` | Appliances (small) |
+| `electronics` | Electronics |
+| `computing` | Computing |
+| `audio_video` | Audio / Video |
+| `phones_tablets` | Phones & Tablets |
+| `tools_garden` | Tools & Garden |
+| `furniture` | Furniture |
+| `other` | Other |
+
+Keys are append-only. A key that has ever been written to a vault is never
+renamed or repurposed, because doing so silently changes what existing records
+mean — and the fallback above would then render it as a raw key rather than
+raise an error.
+
+Implementations:
+
+- C# — `HomeVault.Core/Localisation/CatalogKeys.cs` and `Catalog.cs`
+- JavaScript — `homevault-site/viewer.html` (`CATALOG`, `catalogLabel`)
+
+---
+
 ### rooms/{id}.json
 
 ```json
 {
   "id": "uuid",
-  "name": "Kitchen",
+  "name": "kitchen",
   "notes": "Renovated 2023",
   "createdAt": "2026-01-10T09:00:00Z"
 }
@@ -208,7 +362,7 @@ Always present. Always plaintext. Contains lightweight summaries of every record
 | Field | Type | Description |
 |---|---|---|
 | `id` | `string` | UUID |
-| `name` | `string` | Display name |
+| `name` | `string` | Catalog key or free text — see [Catalog values](#catalog-values--rooms-and-categories) |
 | `notes` | `string \| null` | Free-form notes |
 | `createdAt` | `string` | ISO 8601 UTC timestamp |
 
@@ -222,11 +376,12 @@ Plaintext tier. Always readable without a passphrase.
 {
   "id": "uuid",
   "name": "Dishwasher",
-  "category": "Appliances",
+  "category": "appliances_large",
   "roomId": "uuid",
   "brand": "Bosch",
   "model": "SHPM88Z75N",
   "primaryPhotoId": "uuid",
+  "primaryPhotoFilename": "uuid.jpg.enc",
   "warrantyExpiryDate": "2027-06-15",
   "notes": "Installed by HomeDepot",
   "hasSecrets": true,
@@ -239,11 +394,12 @@ Plaintext tier. Always readable without a passphrase.
 |---|---|---|
 | `id` | `string` | UUID |
 | `name` | `string` | Display name |
-| `category` | `string` | Free-form category label |
+| `category` | `string` | Catalog key or free text — see [Catalog values](#catalog-values--rooms-and-categories) |
 | `roomId` | `string \| null` | UUID of the containing room |
 | `brand` | `string \| null` | Manufacturer name |
 | `model` | `string \| null` | Model name or number |
 | `primaryPhotoId` | `string \| null` | UUID of the primary photo attachment |
+| `primaryPhotoFilename` | `string \| null` | On-disk filename of that attachment, e.g. `"a3f1….jpg.enc"`. Denormalised out of the sensitive tier so a list built from the plaintext index can show a thumbnail without opening a sidecar per row. Maintained by `VaultService` on save and backfilled by Rebuild Index — nothing else should write it. |
 | `warrantyExpiryDate` | `string \| null` | `YYYY-MM-DD` |
 | `notes` | `string \| null` | Free-form notes |
 | `hasSecrets` | `boolean` | Whether a sidecar exists. Set automatically by the writer. |
@@ -298,6 +454,15 @@ Sensitive tier sidecar. Contains the same UUID as its companion `items/{id}.json
 
 The `ciphertext` decrypts to the raw JSON shown above.
 
+> **Why a filename is in the plaintext tier.** `primaryPhotoId` points at an
+> `Attachment`, and attachments live in this sidecar — so the plaintext index
+> cannot resolve a photo to a file, and opening every sidecar to do it is the
+> exact cost `index.json` exists to avoid. `primaryPhotoFilename` closes that
+> gap. It reveals the file extension and whether the blob is encrypted, neither
+> of which is new: anyone who can list `attachments/` already sees both. It does
+> **not** reveal the image — thumbnails live outside the vault and are encrypted
+> when their source is (`docs/THUMBNAILS.md`).
+
 **HouseholdItemSecrets fields:**
 
 | Field | Type | Description |
@@ -306,10 +471,10 @@ The `ciphertext` decrypts to the raw JSON shown above.
 | `serialNumber` | `string \| null` | Manufacturer serial number |
 | `purchaseDate` | `string \| null` | `YYYY-MM-DD` |
 | `purchasePrice` | `number \| null` | Decimal amount |
-| `purchaseCurrency` | `string \| null` | ISO 4217 currency code (e.g. `"USD"`) |
+| `purchaseCurrency` | `string \| null` | ISO 4217 currency code (e.g. `"USD"`). Only written alongside a `purchasePrice` — an amount-less currency says nothing, and the app's picker always has a selection, so writing it unconditionally would stamp one onto every record. |
 | `purchaseStore` | `string \| null` | Retailer or vendor name |
 | `warrantyClaimRef` | `string \| null` | Reference number for an active/past warranty claim |
-| `repairHistory` | `RepairEntry[]` | See [RepairEntry](#repairentry) |
+| `repairHistory` | `RepairEntry[]` | See [RepairEntry](#repairentry). Appended to by the repair form and by completing a linked maintenance task from the item's detail screen. |
 | `attachments` | `Attachment[]` | See [Attachment](#attachment) |
 
 ---
@@ -350,12 +515,31 @@ Always plaintext.
 | `linkedItemId` | `string \| null` | UUID of the related household item |
 | `checklistId` | `string \| null` | UUID of the parent checklist (if a member) |
 | `schedule` | `Schedule` | See [Schedule](#schedule) |
-| `dueDate` | `string \| null` | `YYYY-MM-DD`. Recalculated after each completion for recurring tasks. `null` after a one-off task is completed. |
+| `dueDate` | `string \| null` | `YYYY-MM-DD`. Set at creation for **both** schedule types, and recalculated after each completion for recurring tasks. `null` only after a one-off task is completed. |
 | `completionHistory` | `CompletionEntry[]` | See [CompletionEntry](#completionentry) |
 | `createdAt` | `string` | ISO 8601 UTC timestamp |
 | `updatedAt` | `string` | ISO 8601 UTC timestamp |
 
 **Recurrence rule:** On completion of a recurring task, `dueDate = completionDate + schedule.intervalDays`. Being late never compresses the next interval — the clock always starts from the actual completion date.
+
+**Due-date invariant:** an outstanding task always has a `dueDate`, whatever its
+schedule type. `null` means the task is a completed one-off and nothing else.
+
+This is not decoration — it is what every list in the app filters on, so a task
+written with `dueDate: null` is not merely unsorted, it is *unreachable*: no
+screen shows it, so it cannot be opened, edited, or completed.
+
+A recurring task's first `dueDate` therefore comes from the writer, not from the
+schedule. `ScheduleService.ComputeNextDueDate` derives a date from the previous
+completion and has nothing to count from before the first one, so it returns
+`null` for a task that has never been completed. `TaskService.CreateTaskAsync`
+seeds `today + intervalDays` when a recurring task arrives without one.
+
+Anything writing a task record — including a tool operating on the vault
+directly — has to honour this. If you ever genuinely need "a task with no due
+date", add a field to express it; do not reuse the `null`.
+
+Detail and the bug that established this: `docs/TESTING-NOTES-2026-08-22.md`.
 
 ---
 

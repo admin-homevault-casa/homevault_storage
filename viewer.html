@@ -3,11 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- Lock origins so any future regression in esc() can't load remote scripts. -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
+  <!-- ISSUES.md S13: Lock down origins. The viewer parses user-supplied JSON,
+       so a CSP guards against any future regression in esc() / innerHTML
+       usage. `style-src 'unsafe-inline'` is required because the viewer
+       computes badge colours inline; if that ever moves to data-* attributes,
+       drop the directive. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
   <meta name="referrer" content="strict-origin-when-cross-origin">
-  <title>HomeVault Viewer</title>
-  <meta name="description" content="Browse a HomeVault data store in any browser. No upload, no server. Everything stays local.">
+  <title>HomeVault Viewer — homevault.casa</title>
+  <meta name="description" content="Browse a HomeVault data store in your browser. No upload, no server. Everything stays local.">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/reset.css">
   <style>
     /* ── Design tokens ── */
     :root {
@@ -27,12 +33,31 @@
       --green-bg:   #0f1e15;
     }
 
+    @font-face {
+      font-family: "JetBrains Mono";
+      src: url("assets/fonts/jetbrains-mono-latin-ext-400-normal.woff2") format("woff2"),
+           url("assets/fonts/jetbrains-mono-latin-400-normal.woff2") format("woff2");
+      font-weight: 400; font-style: normal; font-display: swap;
+    }
+    @font-face {
+      font-family: "JetBrains Mono";
+      src: url("assets/fonts/jetbrains-mono-latin-ext-600-normal.woff2") format("woff2"),
+           url("assets/fonts/jetbrains-mono-latin-600-normal.woff2") format("woff2");
+      font-weight: 600; font-style: normal; font-display: swap;
+    }
+    @font-face {
+      font-family: "JetBrains Mono";
+      src: url("assets/fonts/jetbrains-mono-latin-ext-700-normal.woff2") format("woff2"),
+           url("assets/fonts/jetbrains-mono-latin-700-normal.woff2") format("woff2");
+      font-weight: 700; font-style: normal; font-display: swap;
+    }
+
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
       background: var(--bg);
       color: var(--text);
-      font-family: 'JetBrains Mono', 'Cascadia Code', 'Fira Code', 'Courier New', monospace;
+      font-family: 'JetBrains Mono', 'Cascadia Code', 'Courier New', monospace;
       font-size: 13px;
       line-height: 1.6;
       height: 100dvh;
@@ -40,6 +65,24 @@
       flex-direction: column;
       overflow: hidden;
     }
+
+    /* ── Site nav strip ── */
+    #sitenav {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 7px 16px;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      font-size: 11px;
+      flex-shrink: 0;
+    }
+    #sitenav a            { color: var(--muted); text-decoration: none; }
+    #sitenav a:hover      { color: var(--accent); }
+    #sitenav .site-logo   { color: var(--accent); font-weight: 700; letter-spacing: .1em; font-size: 12px; }
+    #sitenav .nav-sep     { color: var(--border); }
+    #sitenav .current     { color: var(--text); }
+    #sitenav .right       { margin-left: auto; display: flex; gap: 16px; }
 
     /* ── App top bar ── */
     #topbar {
@@ -91,33 +134,15 @@
       cursor: pointer;
       letter-spacing: .08em;
     }
-    #landing .open-big:hover  { background: var(--text); }
-    #landing .fallback        { color: var(--muted); font-size: 11px; cursor: pointer; text-decoration: underline; }
-    #landing .demo-link       { color: var(--accent); font-size: 12px; cursor: pointer; }
-    #landing .demo-link:hover { text-decoration: underline; }
-    #landing .divider         { color: var(--border); font-size: 11px; }
-    #landing .demo-note       { color: var(--muted); font-size: 11px; max-width: 360px; line-height: 1.8; }
-    #landing .demo-note code  { color: var(--accent); font-family: inherit; }
+    #landing .open-big:hover    { background: var(--text); }
+    #landing .fallback          { color: var(--muted); font-size: 11px; cursor: pointer; text-decoration: underline; }
+    #landing .demo-link         { color: var(--accent); font-size: 12px; cursor: pointer; }
+    #landing .demo-link:hover   { text-decoration: underline; }
+    #landing .divider           { color: var(--border); font-size: 11px; }
 
     /* ── App shell ── */
     #app { flex: 1; display: none; overflow: hidden; }
     #app.visible { display: flex; }
-
-    /* ── Demo banner ── */
-    #demo-banner {
-      background: var(--accent-bg);
-      border-bottom: 1px solid var(--accent);
-      color: var(--accent);
-      font-size: 11px;
-      padding: 6px 16px;
-      display: none;
-      flex-shrink: 0;
-      align-items: center;
-      gap: 12px;
-    }
-    #demo-banner.visible { display: flex; }
-    #demo-banner .dbright { margin-left: auto; cursor: pointer; color: var(--muted); }
-    #demo-banner .dbright:hover { color: var(--text); }
 
     /* ── Sidebar ── */
     #sidebar {
@@ -174,9 +199,9 @@
       padding: 6px 10px;
       outline: none;
     }
-    #search:focus        { border-color: var(--accent); }
+    #search:focus       { border-color: var(--accent); }
     #search::placeholder { color: var(--muted); }
-    #list-body           { overflow-y: auto; flex: 1; }
+    #list-body          { overflow-y: auto; flex: 1; }
 
     /* ── Cards ── */
     .card {
@@ -187,12 +212,12 @@
       align-items: center;
       gap: 10px;
     }
-    .card:hover       { background: var(--surface); }
-    .card.selected    { background: var(--surface); border-left: 2px solid var(--accent); padding-left: 12px; }
-    .card-main        { flex: 1; min-width: 0; }
-    .card-title       { font-size: 13px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .card-sub         { font-size: 11px; color: var(--muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .card-right       { flex-shrink: 0; }
+    .card:hover           { background: var(--surface); }
+    .card.selected        { background: var(--surface); border-left: 2px solid var(--accent); padding-left: 12px; }
+    .card-main            { flex: 1; min-width: 0; }
+    .card-title           { font-size: 13px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .card-sub             { font-size: 11px; color: var(--muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .card-right           { flex-shrink: 0; }
 
     /* ── Badges ── */
     .badge { display: inline-block; font-size: 10px; padding: 2px 7px; letter-spacing: .04em; white-space: nowrap; }
@@ -227,6 +252,23 @@
     }
     .locked-banner .lock { color: var(--accent); }
 
+    /* ── Demo banner ── */
+    #demo-banner {
+      background: var(--accent-bg);
+      border-bottom: 1px solid var(--accent);
+      color: var(--accent);
+      font-size: 11px;
+      padding: 6px 16px;
+      display: none;
+      flex-shrink: 0;
+      align-items: center;
+      gap: 12px;
+    }
+    #demo-banner.visible { display: flex; }
+    #demo-banner a { color: var(--accent); }
+    #demo-banner .dbright { margin-left: auto; cursor: pointer; color: var(--muted); }
+    #demo-banner .dbright:hover { color: var(--text); }
+
     /* ── Empty / error ── */
     .empty { padding: 48px 24px; text-align: center; color: var(--muted); font-size: 12px; line-height: 1.9; }
     .empty .glyph { font-size: 22px; margin-bottom: 10px; }
@@ -257,15 +299,26 @@
 </head>
 <body>
 
-<!-- ── Demo banner ───────────────────────────────────────────────────────── -->
+<!-- ── Site nav ─────────────────────────────────────────────────────────── -->
+<nav id="sitenav">
+  <a href="/" class="site-logo">HOMEVAULT</a>
+  <span class="nav-sep">/</span>
+  <span class="current">viewer</span>
+  <div class="right">
+    <a href="docs.html">docs</a>
+    <a href="https://github.com/admin-homevault-casa/homevault_storage" target="_blank">schema</a>
+  </div>
+</nav>
+
+<!-- ── Demo banner (shown when demo vault is loaded) ─────────────────────── -->
 <div id="demo-banner">
-  <span>// viewing demo vault — <a href="#" onclick="openVault();return false;" style="color:var(--accent)">open your own vault folder</a> to browse real data</span>
-  <span class="dbright" onclick="document.getElementById('demo-banner').classList.remove('visible')">✕</span>
+  <span>// viewing demo vault — <a href="#" onclick="openVault();return false;">open your own vault folder</a> to browse real data</span>
+  <span class="dbright" onclick="dismissDemo()">✕</span>
 </div>
 
-<!-- ── Top bar ───────────────────────────────────────────────────────────── -->
+<!-- ── App top bar ──────────────────────────────────────────────────────── -->
 <div id="topbar">
-  <span class="logo">HOMEVAULT</span>
+  <span class="logo">VAULT</span>
   <span class="sep">/</span>
   <span id="vault-name">no vault loaded</span>
   <button id="open-btn" onclick="openVault()">open vault</button>
@@ -280,12 +333,7 @@
   </p>
   <button class="open-big" onclick="openVault()">open vault folder</button>
   <span class="divider">— or —</span>
-  <span class="demo-link" id="demo-btn" onclick="loadDemo()">explore the demo vault →</span>
-  <p class="demo-note">
-    Demo requires a local server:<br>
-    <code>python -m http.server 8000</code><br>
-    then open <code>http://localhost:8000/viewer.html</code>
-  </p>
+  <span class="demo-link" onclick="loadDemo()">explore the demo vault →</span>
   <span class="fallback" onclick="triggerFileInput()">folder picker not supported? select files manually →</span>
 </div>
 
@@ -323,14 +371,9 @@
 <input type="file" id="file-input" webkitdirectory multiple onchange="loadFromFiles(event)">
 
 <script>
-/* ── Config ─────────────────────────────────────────────────────────────────
-   DEMO_BASE_URL: path to a served demo-vault directory.
-   Works when served via a local HTTP server (e.g. python -m http.server).
-   Does NOT work when opened directly as a file:// URL (browser security).
-   Set to null to hide the demo button entirely.
-────────────────────────────────────────────────────────────────────────────── */
+/* ── Config ────────────────────────────────────────────────────────────── */
 const CONFIG = {
-  DEMO_BASE_URL: './demo-vault'
+  DEMO_BASE_URL: '/demo-vault'
 };
 
 /* ── State ─────────────────────────────────────────────────────────────── */
@@ -358,7 +401,7 @@ function triggerFileInput() {
   document.getElementById('file-input').click();
 }
 
-/* ── File System Access API ──────────────────────────────────────────────── */
+/* ── File System Access API ─────────────────────────────────────────────── */
 async function loadFromDirHandle(dh) {
   setLoading(true);
   try {
@@ -391,7 +434,7 @@ async function loadFromFiles(ev) {
     const rel = f.webkitRelativePath.split('/').slice(1).join('/');
     map.set(rel, f);
   }
-  const read = async (path) => {
+  const read  = async (path) => {
     const f = map.get(path);
     if (!f) return null;
     try { return JSON.parse(await f.text()); } catch { return null; }
@@ -403,11 +446,10 @@ async function loadFromFiles(ev) {
 
 /* ── Demo mode ───────────────────────────────────────────────────────────── */
 async function loadDemo() {
-  if (!CONFIG.DEMO_BASE_URL) return;
   setLoading(true);
-  isDemo     = true;
-  const base = CONFIG.DEMO_BASE_URL;
-  const read = async (path) => {
+  isDemo       = true;
+  const base   = CONFIG.DEMO_BASE_URL;
+  const read   = async (path) => {
     try {
       const r = await fetch(`${base}/${path}`);
       if (!r.ok) return null;
@@ -416,6 +458,10 @@ async function loadDemo() {
   };
   await initVault(read, 'demo vault');
   setLoading(false);
+}
+
+function dismissDemo() {
+  document.getElementById('demo-banner').classList.remove('visible');
 }
 
 /* ── Init ────────────────────────────────────────────────────────────────── */
@@ -472,14 +518,17 @@ function renderList() {
   const body = document.getElementById('list-body');
 
   if (section === 'items') {
-    const rows = filt(V.index.items, q, i => [i.name, i.category, i.brand, i.model]);
+    // Search matches the label as well as the stored key, so typing "Kitchen"
+    // finds a room stored as "kitchen".
+    const rows = filt(V.index.items, q,
+      i => [i.name, i.category, categoryLabel(i.category), i.brand, i.model]);
     document.getElementById('sec-count').textContent = rows.length + ' items';
     if (!rows.length) { body.innerHTML = emptyState('no items'); return; }
     body.innerHTML = rows.map(item => {
       const ws   = warrantyStatus(item.warrantyExpiryDate);
       const room = roomName(item.roomId);
       return card(item.id, item.name,
-        [item.category, item.brand, room].filter(Boolean).join(' · '),
+        [categoryLabel(item.category), item.brand, room].filter(Boolean).join(' · '),
         `<span class="badge" style="color:${ws.color};background:${ws.bg}">${ws.text}</span>`,
         `selectItem('${item.id}')`);
     }).join('');
@@ -511,12 +560,12 @@ function renderList() {
     }).join('');
 
   } else if (section === 'rooms') {
-    const rows = filt(V.index.rooms, q, r => [r.name]);
+    const rows = filt(V.index.rooms, q, r => [r.name, roomLabel(r.name)]);
     document.getElementById('sec-count').textContent = rows.length + ' rooms';
     if (!rows.length) { body.innerHTML = emptyState('no rooms'); return; }
     body.innerHTML = rows.map(room => {
       const n = room.itemCount ?? 0;
-      return card(room.id, room.name,
+      return card(room.id, roomLabel(room.name),
         n + ' item' + (n !== 1 ? 's' : ''),
         `<span style="color:var(--muted);font-size:13px">›</span>`,
         `selectRoom('${room.id}')`);
@@ -556,7 +605,9 @@ async function selectItem(id) {
     } else {
       const s = await V.read(`items/${id}.secret.json`);
       if (s) {
-        // Schema field names — STORAGE_SCHEMA.md §HouseholdItemSecrets.
+        // ISSUES.md S6: schema field names are purchaseCurrency / purchaseStore.
+        // There is no `notes` field on HouseholdItemSecrets — those live on the
+        // plaintext HouseholdItem.
         const priceLabel = s.purchasePrice != null
           ? `${currencyGlyph(s.purchaseCurrency)}${s.purchasePrice.toLocaleString()}`
           : null;
@@ -574,7 +625,7 @@ async function selectItem(id) {
   panel.innerHTML = `
     <div class="detail-hdr">
       <div class="detail-name">${esc(item.name)}</div>
-      <div class="detail-sub">${esc(item.category)}${item.brand ? ' · ' + esc(item.brand) : ''}</div>
+      <div class="detail-sub">${esc(categoryLabel(item.category))}${item.brand ? ' · ' + esc(item.brand) : ''}</div>
     </div>
     ${detailSec('DETAILS', [
       drow('room',  room),
@@ -614,7 +665,9 @@ async function selectTask(id) {
   const history = (task.completionHistory ?? []).slice(-5).reverse();
 
   const histHtml = history.length
-    // drow() escapes its value — use drowRaw() for pre-built chip markup.
+    // ISSUES.md S7: drow() runs esc() on its value, so the markup was rendered
+    // as literal text. drowRaw() bypasses escaping for pre-built HTML — only
+    // safe for content the viewer itself authored.
     ? history.map(c => drowRaw(fmtDate(c.date), `<span style="color:var(--green)">✓ done</span>`)).join('')
     : `<div style="color:var(--muted);font-size:11px">no completions recorded</div>`;
 
@@ -659,6 +712,8 @@ async function selectChecklist(id) {
     : `<div style="color:var(--muted);font-size:11px">no tasks</div>`;
 
   const histHtml = (cl.completionHistory ?? []).slice(-3).reverse()
+    // S7 — same fix as the task panel; trigger comes from a known enum so it's
+    // already escape-safe, but esc() it anyway for defence in depth.
     .map(c => drowRaw(fmtDate(c.date),
       `<span style="color:var(--green)">✓ ${esc(c.trigger ?? 'done')}</span>`)).join('') ||
     `<div style="color:var(--muted);font-size:11px">no completions recorded</div>`;
@@ -701,7 +756,7 @@ async function selectRoom(id) {
 
   panel.innerHTML = `
     <div class="detail-hdr">
-      <div class="detail-name">${esc(room.name)}</div>
+      <div class="detail-name">${esc(roomLabel(room.name))}</div>
       <div class="detail-sub">${roomItems.length} item${roomItems.length !== 1 ? 's' : ''}</div>
     </div>
     ${room.notes ? detailSec('NOTES', `<div style="font-size:12px;color:var(--text)">${esc(room.notes)}</div>`) : ''}
@@ -709,10 +764,13 @@ async function selectRoom(id) {
 }
 
 /* ── Domain logic ─────────────────────────────────────────────────────────
-   Thresholds + tiers mirror HomeVault.Core (WarrantyHelper + DueDateHelper).
-   Canonical contract: DISPLAY_CONVENTIONS.md.
+   TD1 / TD2: thresholds and tiers mirror HomeVault.Core (WarrantyHelper +
+   DueDateHelper). The canonical contract lives in DISPLAY_CONVENTIONS.md —
+   any change here must also land in Core and the conformance tests.
    ─────────────────────────────────────────────────────────────────────── */
 
+// Single-threshold warranty model: expired / expiring-soon / active.
+// Default 60-day threshold (WarrantyHelper.DefaultExpiringSoonThresholdDays).
 const WARRANTY_EXPIRING_SOON_DAYS = 60;
 
 function warrantyStatus(dateStr) {
@@ -729,6 +787,8 @@ function warrantyStatus(dateStr) {
   };
 }
 
+// Five-tier due-date model: overdue / due-today / due-soon (≤7d) /
+// upcoming (≤30d) / future. Mirrors DueDateHelper.
 const DUE_WARNING_DAYS  = 7;
 const DUE_UPCOMING_DAYS = 30;
 
@@ -742,6 +802,8 @@ function dueDisplay(dateStr) {
   return { text: 'in ' + Math.floor(days / 30) + 'mo', color: 'var(--green)' };
 }
 
+// Treat both incoming date strings ("YYYY-MM-DD" or full ISO) and "today" as
+// local-midnight dates so comparisons are timezone-agnostic.
 function daysFromToday(dateStr) {
   const target = new Date(dateStr.length === 10 ? dateStr + 'T00:00:00' : dateStr);
   const now    = new Date();
@@ -760,7 +822,49 @@ function currencyGlyph(code) {
   }
 }
 
-function roomName(id)      { return id ? (V.index.rooms      ?? []).find(r => r.id === id)?.name ?? null : null; }
+/* ── Catalog keys ──────────────────────────────────────────────────────────
+   Mirrors HomeVault.Core/Localisation/Catalog.cs (spec section 18).
+
+   The app stores a stable lowercase key for anything the user picked from one
+   of its own lists, and the user's own words verbatim for anything they typed.
+   Without the same mapping here, a vault would render "master_bedroom" and
+   "appliances_large" in the viewer — which is exactly the "anyone can read your
+   vault without this app" promise failing at the first hurdle.
+
+   Unknown values fall through to themselves. That covers custom names, keys
+   added by a newer build of the app, and any vault written before the scheme
+   existed — the same fallback rule the app uses, for the same reasons.
+
+   Adding a key here without adding it to Strings.resx (or the other way round)
+   makes the two disagree. There is no automated check across the boundary, so
+   they are kept adjacent in review instead: both lists are short and change
+   together or not at all.                                                     */
+const CATALOG = {
+  room: {
+    kitchen: 'Kitchen', living_room: 'Living Room', master_bedroom: 'Master Bedroom',
+    bedroom: 'Bedroom', bathroom: 'Bathroom', garage: 'Garage', basement: 'Basement',
+    attic: 'Attic', laundry: 'Laundry', office: 'Office', outdoor: 'Outdoor',
+    other: 'Other'
+  },
+  category: {
+    appliances_large: 'Appliances (large)', appliances_small: 'Appliances (small)',
+    electronics: 'Electronics', computing: 'Computing', audio_video: 'Audio / Video',
+    phones_tablets: 'Phones & Tablets', tools_garden: 'Tools & Garden',
+    furniture: 'Furniture', other: 'Other'
+  }
+};
+
+/* Rooms and categories are looked up separately because they are separate
+   fields on disk, which is why both may hold "other" without ambiguity. */
+function catalogLabel(scope, stored) {
+  if (!stored) return stored;
+  return CATALOG[scope][stored] ?? stored;
+}
+
+function roomLabel(name)     { return catalogLabel('room', name); }
+function categoryLabel(name) { return catalogLabel('category', name); }
+
+function roomName(id)      { const n = (V.index.rooms ?? []).find(r => r.id === id)?.name; return id ? (n ? roomLabel(n) : null) : null; }
 function itemName(id)      { return id ? (V.index.items      ?? []).find(i => i.id === id)?.name ?? null : null; }
 function checklistName(id) { return id ? (V.index.checklists ?? []).find(c => c.id === id)?.name ?? null : null; }
 
@@ -777,8 +881,9 @@ function drow(key, val) {
   if (val == null || val === '') return '';
   return `<div class="drow"><span class="dkey">${key}</span><span class="dval">${esc(String(val))}</span></div>`;
 }
-// Pre-built HTML variant — use only for value markup the viewer itself
-// authored. Do NOT pass user-supplied strings through this.
+// Pre-built HTML variant — used only for value markup the viewer authored
+// itself (e.g. completion-history chips). DO NOT pass user-supplied strings
+// through this — use drow() instead.
 function drowRaw(key, htmlVal) {
   if (htmlVal == null || htmlVal === '') return '';
   return `<div class="drow"><span class="dkey">${key}</span><span class="dval">${htmlVal}</span></div>`;
