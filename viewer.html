@@ -8,7 +8,7 @@
        usage. `style-src 'unsafe-inline'` is required because the viewer
        computes badge colours inline; if that ever moves to data-* attributes,
        drop the directive. -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-ZV7XxNqUbiSQBfCtXb7viqTFBjJ78QkPLAd6s89ap2A='; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <title>HomeVault Viewer — homevault.casa</title>
   <meta name="description" content="Browse a HomeVault data store in your browser. No upload, no server. Everything stays local.">
@@ -312,8 +312,8 @@
 
 <!-- ── Demo banner (shown when demo vault is loaded) ─────────────────────── -->
 <div id="demo-banner">
-  <span>// viewing demo vault — <a href="#" onclick="openVault();return false;">open your own vault folder</a> to browse real data</span>
-  <span class="dbright" onclick="dismissDemo()">✕</span>
+  <span>// viewing demo vault — <a href="#" data-action="open">open your own vault folder</a> to browse real data</span>
+  <span class="dbright" data-action="dismiss-demo">✕</span>
 </div>
 
 <!-- ── App top bar ──────────────────────────────────────────────────────── -->
@@ -321,7 +321,7 @@
   <span class="logo">VAULT</span>
   <span class="sep">/</span>
   <span id="vault-name">no vault loaded</span>
-  <button id="open-btn" onclick="openVault()">open vault</button>
+  <button id="open-btn" data-action="open">open vault</button>
 </div>
 
 <!-- ── Landing ──────────────────────────────────────────────────────────── -->
@@ -331,10 +331,10 @@
     Browse your HomeVault data store in any browser.<br>
     Nothing is uploaded. Everything stays on your device.
   </p>
-  <button class="open-big" onclick="openVault()">open vault folder</button>
+  <button class="open-big" data-action="open">open vault folder</button>
   <span class="divider">— or —</span>
-  <span class="demo-link" onclick="loadDemo()">explore the demo vault →</span>
-  <span class="fallback" onclick="triggerFileInput()">folder picker not supported? select files manually →</span>
+  <span class="demo-link" data-action="demo">explore the demo vault →</span>
+  <span class="fallback" data-action="pick-files">folder picker not supported? select files manually →</span>
 </div>
 
 <!-- ── App ───────────────────────────────────────────────────────────────── -->
@@ -342,10 +342,10 @@
   <div id="sidebar">
     <div class="nav-group">
       <div class="nav-group-title">VAULT</div>
-      <div class="nav-item active" data-sec="items"      onclick="switchSection('items')">items      <span class="nav-count" id="cnt-items">0</span></div>
-      <div class="nav-item"        data-sec="tasks"      onclick="switchSection('tasks')">tasks      <span class="nav-count" id="cnt-tasks">0</span></div>
-      <div class="nav-item"        data-sec="checklists" onclick="switchSection('checklists')">checklists <span class="nav-count" id="cnt-checklists">0</span></div>
-      <div class="nav-item"        data-sec="rooms"      onclick="switchSection('rooms')">rooms      <span class="nav-count" id="cnt-rooms">0</span></div>
+      <div class="nav-item active" data-sec="items"      >items      <span class="nav-count" id="cnt-items">0</span></div>
+      <div class="nav-item"        data-sec="tasks"      >tasks      <span class="nav-count" id="cnt-tasks">0</span></div>
+      <div class="nav-item"        data-sec="checklists" >checklists <span class="nav-count" id="cnt-checklists">0</span></div>
+      <div class="nav-item"        data-sec="rooms"      >rooms      <span class="nav-count" id="cnt-rooms">0</span></div>
     </div>
     <hr class="hsep">
     <div class="vault-meta" id="vault-meta"></div>
@@ -359,7 +359,7 @@
         <span class="list-count-badge" id="sec-count"></span>
       </div>
       <div class="search-wrap">
-        <input type="text" id="search" placeholder="filter..." oninput="renderList()">
+        <input type="text" id="search" placeholder="filter...">
       </div>
       <div id="loading">loading...</div>
       <div id="list-body"></div>
@@ -368,7 +368,7 @@
   </div>
 </div>
 
-<input type="file" id="file-input" webkitdirectory multiple onchange="loadFromFiles(event)">
+<input type="file" id="file-input" webkitdirectory multiple>
 
 <script>
 /* ── Config ────────────────────────────────────────────────────────────── */
@@ -527,10 +527,9 @@ function renderList() {
     body.innerHTML = rows.map(item => {
       const ws   = warrantyStatus(item.warrantyExpiryDate);
       const room = roomName(item.roomId);
-      return card(item.id, item.name,
+      return card(item.id, 'item', item.name,
         [categoryLabel(item.category), item.brand, room].filter(Boolean).join(' · '),
-        `<span class="badge" style="color:${ws.color};background:${ws.bg}">${ws.text}</span>`,
-        `selectItem('${item.id}')`);
+        `<span class="badge" style="color:${ws.color};background:${ws.bg}">${ws.text}</span>`);
     }).join('');
 
   } else if (section === 'tasks') {
@@ -541,10 +540,9 @@ function renderList() {
       const dd     = dueDisplay(task.dueDate);
       const linked = task.linkedItemId ? itemName(task.linkedItemId) : null;
       const recur  = task.scheduleType === 'recurring';
-      return card(task.id, task.title,
+      return card(task.id, 'task', task.title,
         [linked ?? 'no linked item', recur ? '↻ recurring' : null].filter(Boolean).join(' · '),
-        `<span style="font-size:11px;color:${dd.color}">${dd.text}</span>`,
-        `selectTask('${task.id}')`);
+        `<span style="font-size:11px;color:${dd.color}">${dd.text}</span>`);
     }).join('');
 
   } else if (section === 'checklists') {
@@ -553,10 +551,9 @@ function renderList() {
     if (!rows.length) { body.innerHTML = emptyState('no checklists'); return; }
     body.innerHTML = rows.map(cl => {
       const dd = dueDisplay(cl.dueDate);
-      return card(cl.id, cl.name,
+      return card(cl.id, 'checklist', cl.name,
         (cl.taskCount ?? 0) + ' tasks',
-        `<span style="font-size:11px;color:${dd.color}">${dd.text}</span>`,
-        `selectChecklist('${cl.id}')`);
+        `<span style="font-size:11px;color:${dd.color}">${dd.text}</span>`);
     }).join('');
 
   } else if (section === 'rooms') {
@@ -565,16 +562,28 @@ function renderList() {
     if (!rows.length) { body.innerHTML = emptyState('no rooms'); return; }
     body.innerHTML = rows.map(room => {
       const n = room.itemCount ?? 0;
-      return card(room.id, roomLabel(room.name),
+      return card(room.id, 'room', roomLabel(room.name),
         n + ' item' + (n !== 1 ? 's' : ''),
-        `<span style="color:var(--muted);font-size:13px">›</span>`,
-        `selectRoom('${room.id}')`);
+        `<span style="color:var(--muted);font-size:13px">›</span>`);
     }).join('');
   }
 }
 
-function card(id, title, sub, right, onclick) {
-  return `<div class="card${selectedId === id ? ' selected' : ''}" onclick="${onclick}">
+/*
+   A card carries its identity in data attributes, not in a handler.
+
+   This used to build `onclick="selectItem('${id}')"` — a vault-supplied value
+   interpolated into a JavaScript string inside an HTML attribute, with no
+   escaping. Ids HomeVault writes are uuids, but this viewer is a reader for a
+   documented open format, so the vault it is pointed at may not have been
+   written by HomeVault at all. An id containing a quote would have ended the
+   string and run whatever followed.
+
+   The Content Security Policy also blocks inline handlers outright, so these
+   never fired on the hosted copy regardless. Delegation fixes both.
+*/
+function card(id, kind, title, sub, right) {
+  return `<div class="card${selectedId === id ? ' selected' : ''}" data-kind="${esc(kind)}" data-id="${esc(id)}">
     <div class="card-main">
       <div class="card-title">${esc(title)}</div>
       <div class="card-sub">${esc(sub)}</div>
@@ -896,6 +905,48 @@ function esc(str) {
   if (str == null) return '';
   return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
+
+/* ── Wiring ───────────────────────────────────────────────────────────────
+   Every handler is attached here rather than written into the markup.
+
+   The Content Security Policy sets script-src 'self' with no 'unsafe-inline',
+   which blocks on* attributes outright — and a script hash does not cover them,
+   only <script> blocks. The viewer used inline handlers throughout, so on the
+   hosted copy nothing was clickable at all. It is also why a vault-supplied id
+   no longer has to be interpolated into a handler to make a card selectable.
+──────────────────────────────────────────────────────────────────────────── */
+const ACTIONS = {
+  'open':        openVault,
+  'demo':        loadDemo,
+  'dismiss-demo': dismissDemo,
+  'pick-files':  triggerFileInput
+};
+
+const OPEN_DETAIL = {
+  item:      selectItem,
+  task:      selectTask,
+  checklist: selectChecklist,
+  room:      selectRoom
+};
+
+document.addEventListener('click', e => {
+  const action = e.target.closest('[data-action]');
+  if (action) {
+    e.preventDefault();
+    ACTIONS[action.dataset.action]?.();
+    return;
+  }
+
+  const nav = e.target.closest('.nav-item[data-sec]');
+  if (nav) { switchSection(nav.dataset.sec); return; }
+
+  // A card's identity arrives as data, never as code.
+  const cardEl = e.target.closest('.card[data-kind][data-id]');
+  if (cardEl) OPEN_DETAIL[cardEl.dataset.kind]?.(cardEl.dataset.id);
+});
+
+document.getElementById('search').addEventListener('input', renderList);
+document.getElementById('file-input').addEventListener('change', loadFromFiles);
 
 /* ── UI state ─────────────────────────────────────────────────────────────── */
 function setLoading(on)  { document.getElementById('loading').classList.toggle('visible', on); }
